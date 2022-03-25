@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import NoReturn
-from ...base import BaseEstimator
+from IMLearn.base import BaseEstimator
 import numpy as np
 from numpy.linalg import pinv
 
@@ -49,7 +49,13 @@ class LinearRegression(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
-        raise NotImplementedError()
+        # adds a column of ones for intercept if needed
+        if self.include_intercept_:
+            ones_vector = np.ones(X.shape[0])
+            X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
+
+        pseudo_inverse = pinv(X)
+        self.coefs_ = pseudo_inverse @ y
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
