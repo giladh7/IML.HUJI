@@ -20,14 +20,28 @@ def load_data(filename: str):
     2) Tuple of pandas.DataFrame and Series
     3) Tuple of ndarray of shape (n_samples, n_features) and ndarray of shape (n_samples,)
     """
-    # TODO - replace below code with any desired preprocessing
     full_data = pd.read_csv(filename).dropna().drop_duplicates()
+    # drop samples with booking date after checking date
+    booking_dates = pd.to_datetime(full_data["booking_datetime"]).dt.date
+    checkin_dates = pd.to_datetime(full_data["checkin_date"]).dt.date
+    full_data = full_data[booking_dates <= checkin_dates]
+    # add column for days of stay
+    checkout_dates = pd.to_datetime(full_data["checkout_date"]).dt.date
+    full_data["days_of_stay"] = (checkout_dates - checkin_dates).dt.days
+    # drop samples with checkout not-after checkin (one day)
+    full_data = full_data[full_data["days_of_stay"] >= 1]
+
+
+
     features = full_data[["h_booking_id",
                           "hotel_id",
                           "accommadation_type_name",
                           "hotel_star_rating",
                           "customer_nationality"]]
+    # create labels - 1 for cancellation, 0 otherwise
     labels = full_data["cancellation_datetime"]
+    labels = labels.fillna(0)
+    labels[labels != 0] = 1
 
     return features, labels
 
