@@ -30,18 +30,22 @@ def load_data(filename: str):
     full_data["days_of_stay"] = (checkout_dates - checkin_dates).dt.days
     # drop samples with checkout not-after checkin (one day)
     full_data = full_data[full_data["days_of_stay"] >= 1]
+    # transform Nan in requests to 0
+    special_requests = ["request_nonesmoke", "request_latecheckin", "request_highfloor", "request_largebed",
+                        "request_twinbeds", "request_airport", "request_earlycheckin"]
+    for request in special_requests:
+        full_data[request] = full_data[request].fillna(0)
 
-
+    # create labels - 1 for cancellation, 0 otherwise
+    labels = full_data["cancellation_datetime"]
+    labels = labels.fillna(0)
+    labels[labels != 0] = 1
 
     features = full_data[["h_booking_id",
                           "hotel_id",
                           "accommadation_type_name",
                           "hotel_star_rating",
                           "customer_nationality"]]
-    # create labels - 1 for cancellation, 0 otherwise
-    labels = full_data["cancellation_datetime"]
-    labels = labels.fillna(0)
-    labels[labels != 0] = 1
 
     return features, labels
 
