@@ -34,9 +34,10 @@ def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .7
 
     """
     m = X.shape[0]
-    train_samples = np.random.choice(np.arange(m), np.ceil(m*train_proportion))
+    train_samples = np.random.choice(np.arange(m), int(np.ceil(m * train_proportion)))
     train_index = np.isin(np.arange(m), train_samples)
     test_index = ~train_index
+    X_train, y_train = X[train_index], y[train_index]
     return X[train_index], y[train_index], X[test_index], y[test_index]
 
 
@@ -59,3 +60,8 @@ def confusion_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
         while value `j` vas found in vector `b`
     """
     raise NotImplementedError()
+
+
+X, y = np.arange(10).reshape((5, 2)), range(5)
+X_train, y_train, X_test, y_test = split_train_test(pd.DataFrame(X), pd.DataFrame(y), 0.33)
+
