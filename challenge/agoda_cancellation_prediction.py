@@ -41,13 +41,10 @@ def load_data(filename: str):
     labels = labels.fillna(0)
     labels[labels != 0] = 1
 
-    features = full_data[["h_booking_id",
-                          "hotel_id",
-                          "accommadation_type_name",
-                          "hotel_star_rating",
-                          "customer_nationality"]]
+    numbers = ["no_of_room", "no_of_extra_bed", "no_of_children", "no_of_adults"]
+    features = ["days_of_stay", "hotel_star_rating"] + special_requests + numbers
 
-    return features, labels
+    return full_data[features], labels
 
 
 def evaluate_and_export(estimator: BaseEstimator, X: np.ndarray, filename: str):
