@@ -20,7 +20,7 @@ def load_data(filename: str):
     2) Tuple of pandas.DataFrame and Series
     3) Tuple of ndarray of shape (n_samples, n_features) and ndarray of shape (n_samples,)
     """
-    full_data = pd.read_csv(filename).dropna().drop_duplicates()
+    full_data = pd.read_csv(filename).drop_duplicates()
     # drop samples with booking date after checking date
     booking_dates = pd.to_datetime(full_data["booking_datetime"]).dt.date
     checkin_dates = pd.to_datetime(full_data["checkin_date"]).dt.date
