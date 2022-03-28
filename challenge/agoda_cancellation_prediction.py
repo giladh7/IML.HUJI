@@ -36,6 +36,9 @@ def load_data(filename: str):
                         "request_twinbeds", "request_airport", "request_earlycheckin"]
     for request in special_requests:
         full_data[request] = full_data[request].fillna(0)
+    # transform charge option to int
+    pay_int_replace = {"Pay Now": 1, "Pay Later": 3, "Pay at Check-in": 2}
+    full_data = full_data.replace({"charge_option": pay_int_replace})
 
     # create labels - 1 for cancellation, 0 otherwise
     labels = full_data["cancellation_datetime"]
@@ -43,7 +46,7 @@ def load_data(filename: str):
     labels[labels != 0] = 1
 
     numbers = ["no_of_room", "no_of_extra_bed", "no_of_children", "no_of_adults"]
-    features = ["days_of_stay", "hotel_star_rating"] + special_requests + numbers
+    features = ["days_of_stay", "hotel_star_rating", "charge_option"] + special_requests + numbers
 
     return full_data[features], labels
 
