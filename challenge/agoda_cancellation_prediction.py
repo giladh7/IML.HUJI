@@ -39,6 +39,9 @@ def load_data(filename: str):
     # transform charge option to int
     pay_int_replace = {"Pay Now": 1, "Pay Later": 3, "Pay at Check-in": 2}
     full_data = full_data.replace({"charge_option": pay_int_replace})
+    # STANDARTIZE original selling amount
+    mean_selling_amount = full_data["original_selling_amount"].mean()
+    full_data["original_selling_amount"] /= mean_selling_amount
 
     # create labels - 1 for cancellation, 0 otherwise
     labels = full_data["cancellation_datetime"]
@@ -46,7 +49,7 @@ def load_data(filename: str):
     labels[labels != 0] = 1
 
     numbers = ["no_of_room", "no_of_extra_bed", "no_of_children", "no_of_adults"]
-    features = ["days_of_stay", "hotel_star_rating", "charge_option"] + special_requests + numbers
+    features = ["days_of_stay", "hotel_star_rating", "charge_option", "guest_is_not_the_customer"] + special_requests + numbers
 
     return full_data[features], labels
 
