@@ -76,9 +76,9 @@ if __name__ == '__main__':
     # Load data
     df, cancellation_labels = load_data("../datasets/agoda_cancellation_train.csv")
     cancellation_labels = cancellation_labels.astype('int')
-    X_train, X_test, y_train, y_test = train_test_split(df, cancellation_labels, test_size=0.25)
+    X_train, X_test, y_train, y_test = train_test_split(df, cancellation_labels, test_size=0.2)
     # Fit model over data
     estimator = AgodaCancellationEstimator().fit(X_train, y_train)
-
+    print(estimator.loss(X_test, y_test))
     # Store model predictions over test set
     # evaluate_and_export(estimator, test_X, "id1_id2_id3.csv")

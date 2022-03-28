@@ -76,4 +76,4 @@ class AgodaCancellationEstimator(BaseEstimator):
         loss : float
             Performance under loss function
         """
-        pass
+        return (self.predict(X) == y).sum() / len(X)
