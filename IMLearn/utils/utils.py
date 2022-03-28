@@ -61,7 +61,3 @@ def confusion_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
     raise NotImplementedError()
 
-
-X, y = np.arange(10).reshape((5, 2)), range(5)
-X_train, y_train, X_test, y_test = split_train_test(pd.DataFrame(X), pd.DataFrame(y), 0.33)
-
