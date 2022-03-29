@@ -1,6 +1,5 @@
 from IMLearn.utils import split_train_test
 from IMLearn.learners.regressors import LinearRegression
-
 from typing import NoReturn
 import numpy as np
 import pandas as pd
@@ -55,20 +54,31 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
     output_path: str (default ".")
         Path to folder in which plots are saved
     """
-    raise NotImplementedError()
+    generic_plot_title = "Correlation between {feature} to response (r={pearson})"
+    response_std = np.std(y)
+    for feature in X.columns:
+        feature_response_cov = y.cov(X[feature])
+        feature_response_std = np.std(X[feature])
+        cur_pearson = feature_response_cov / feature_response_std / response_std
+        fig = px.scatter(x=X[feature], y=y,
+                         title=generic_plot_title.format(feature=feature, pearson=cur_pearson),
+                         labels=dict(x=feature, y="house price"))
+        # fig.write_image(output_path + "/" + feature + ".jpeg", engine="orca")
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    data, response = load_data("C:/Users/gilad/Desktop/uni/current semester/"
-                               "IML.HUJI/datasets/house_prices.csv")
+    path_for_data = "C:/Users/gilad/Desktop/uni/current semester/" \
+                    "IML.HUJI/datasets/house_prices.csv"
+    design_matrix, response = load_data(path_for_data)
 
     # Question 2 - Feature evaluation with respect to response
-    raise NotImplementedError()
+    path_for_saved_plots = "C:/Users/gilad/Desktop/uni/current semester/IML.HUJI/temp"
+    feature_evaluation(design_matrix, response, path_for_saved_plots)
 
     # Question 3 - Split samples into training- and testing sets.
-    raise NotImplementedError()
+    X_train, y_train, X_test, y_test = split_train_test(design_matrix, response)
 
     # Question 4 - Fit model over increasing percentages of the overall training data
     # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
@@ -77,4 +87,9 @@ if __name__ == '__main__':
     #   3) Test fitted model over test set
     #   4) Store average and variance of loss over test set
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
+    percentages = np.arange(10, 101)/100
+    for percent in percentages:
+        cur_sample = X_train.sample(frac=percent)
+
+
     raise NotImplementedError()
