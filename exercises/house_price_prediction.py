@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     # Question 2 - Feature evaluation with respect to response
     path_for_saved_plots = "C:/Users/gilad/Desktop/uni/current semester/IML.HUJI/temp"
-    feature_evaluation(design_matrix, response, path_for_saved_plots)
+    # feature_evaluation(design_matrix, response, path_for_saved_plots)
 
     # Question 3 - Split samples into training- and testing sets.
     X_train, y_train, X_test, y_test = split_train_test(design_matrix, response)
@@ -87,9 +87,18 @@ if __name__ == '__main__':
     #   3) Test fitted model over test set
     #   4) Store average and variance of loss over test set
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
+    model = LinearRegression()
     percentages = np.arange(10, 101)/100
-    for percent in percentages:
-        cur_sample = X_train.sample(frac=percent)
+    average_loss = np.zeros(91)
+    for idx,percent in enumerate(percentages):
+        cur_percent_losses = np.zeros(10)
+        for i in range(10):
+            cur_sample = X_train.sample(frac=percent)
+            cur_results = y_train[cur_sample.index]
+            model.fit(cur_sample.to_numpy(), cur_results)
+            cur_percent_losses[i] = model.loss(X_test.to_numpy(), y_test.to_numpy())
+        average_loss[idx] = cur_percent_losses.mean()
+    fig = px.line(x=percentages, y=average_loss, title="sample_mean_graph_title",
+                  labels=dict(x="Percentage", y="Average loss"))
+    fig.show()
 
-
-    raise NotImplementedError()
