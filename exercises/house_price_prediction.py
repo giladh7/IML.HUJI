@@ -26,12 +26,36 @@ def load_data(filename: str):
     full_data = pd.read_csv(filename).drop_duplicates()
     # omit samples with too small prices
     full_data = full_data[full_data["price"] >= 1000]
+    # omit samples with negative bedroom number
+    full_data = full_data[full_data["bedrooms"] >= 0]
+    # omit samples with negative or zero bathrooms number
+    full_data = full_data[full_data["bathrooms"] >= 0]
+    # omit samples with 0 or negative floors number
+    full_data = full_data[full_data["floors"] >= 1]
+    # omit samples with antique build year
+    full_data = full_data[full_data["yr_built"] >= 1800]
+    # # omit samples with too many bedrooms
+    # full_data = full_data[full_data['bedrooms'] <= 30]
+
     # fill NAN's in view to 0
     full_data["view"].fillna(0)
-    # creating house age feature from yr_built
-    full_data["house_age"] = 2022 - full_data["yr_built"]
+    # creating house age feature from yr_built and date
+    full_data = full_data[full_data["date"].notnull()]
+    full_data["date"] = pd.to_datetime(full_data["date"])
+    # creating house age from yr_built and date
+    full_data["house_age"] = full_data["date"].dt.year - full_data["yr_built"]
+    # creating house renovation column
+    full_data["does_renovation"] = full_data["yr_renovated"].apply(lambda reno: 0 if reno == 0 else 1)
 
-    features = ['bedrooms', 'bathrooms', 'floors', "view", "condition", "grade", "house_age"]
+    # scaling the sqft_living with log, because it has too high values
+    full_data["sqft_living"] = np.log(full_data["sqft_living"])
+    features = ['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors', 'waterfront',
+                'view', 'condition', 'grade', 'sqft_above', 'sqft_basement', 'lat', 'long',
+                'sqft_living15', 'sqft_lot15', "house_age", "does_renovation"]
+    # features = ['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors',
+    #             'view', 'condition', 'grade', 'sqft_above', 'sqft_basement',
+    #             'sqft_living15', 'sqft_lot15', "house_age", "waterfront"]
+
     design_matrix = full_data[features]
     response = full_data["price"]
     return design_matrix, response
@@ -88,9 +112,9 @@ if __name__ == '__main__':
     #   4) Store average and variance of loss over test set
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
     model = LinearRegression()
-    percentages = np.arange(10, 101)/100
+    percentages = np.arange(10, 101) / 100
     average_loss = np.zeros(91)
-    for idx,percent in enumerate(percentages):
+    for idx, percent in enumerate(percentages):
         cur_percent_losses = np.zeros(10)
         for i in range(10):
             cur_sample = X_train.sample(frac=percent)
@@ -101,4 +125,3 @@ if __name__ == '__main__':
     fig = px.line(x=percentages, y=average_loss, title="sample_mean_graph_title",
                   labels=dict(x="Percentage", y="Average loss"))
     fig.show()
-
