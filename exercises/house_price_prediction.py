@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
+
 pio.templates.default = "simple_white"
 
 
@@ -23,7 +24,18 @@ def load_data(filename: str):
     Design matrix and response vector (prices) - either as a single
     DataFrame or a Tuple[DataFrame, Series]
     """
-    raise NotImplementedError()
+    full_data = pd.read_csv(filename).drop_duplicates()
+    # omit samples with too small prices
+    full_data = full_data[full_data["price"] >= 1000]
+    # fill NAN's in view to 0
+    full_data["view"].fillna(0)
+    # creating house age feature from yr_built
+    full_data["house_age"] = 2022 - full_data["yr_built"]
+
+    features = ['bedrooms', 'bathrooms', 'floors', "view", "condition", "grade", "house_age"]
+    design_matrix = full_data[features]
+    response = full_data["price"]
+    return design_matrix, response
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
@@ -49,7 +61,8 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    raise NotImplementedError()
+    data, response = load_data("C:/Users/gilad/Desktop/uni/current semester/"
+                               "IML.HUJI/datasets/house_prices.csv")
 
     # Question 2 - Feature evaluation with respect to response
     raise NotImplementedError()

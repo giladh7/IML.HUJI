@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import NoReturn
 from IMLearn.base import BaseEstimator
+from IMLearn.metrics.loss_functions import mean_square_error
 import numpy as np
 from numpy.linalg import pinv
 
@@ -71,7 +72,7 @@ class LinearRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return X @ self.coefs_
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -90,4 +91,4 @@ class LinearRegression(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        raise NotImplementedError()
+        return mean_square_error(y, self._predict(X))
