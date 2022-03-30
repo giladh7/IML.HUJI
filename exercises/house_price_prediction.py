@@ -47,9 +47,8 @@ def load_data(filename: str):
     # scaling the sqft_living with log, because it has too high values
     full_data["sqft_living"] = np.log(full_data["sqft_living"])
     # handle zip code with dummy variables
-    dummy_vars = pd.get_dummies(full_data["zipcode"], prefix='zip_code')
+    dummy_vars = pd.get_dummies(full_data["zipcode"], drop_first=True)
     full_data = pd.concat([full_data, dummy_vars], axis=1)
-    full_data = full_data.drop('zip_code_98001.0', axis=1)
     response = full_data["price"]
     full_data = full_data.drop(['id', 'date', 'zipcode', 'yr_built', 'yr_renovated', 'price'], axis=1)
     return full_data, response
@@ -107,7 +106,7 @@ if __name__ == '__main__':
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
     model = LinearRegression()
     percentages = np.arange(10, 101) / 100
-    average_loss = np.zeros(91)
+    average_loss, average_std = np.zeros(91), np.zeros(91)
     for idx, percent in enumerate(percentages):
         cur_percent_losses = np.zeros(10)
         for i in range(10):
@@ -116,6 +115,14 @@ if __name__ == '__main__':
             model.fit(cur_sample.to_numpy(), cur_results)
             cur_percent_losses[i] = model.loss(X_test.to_numpy(), y_test.to_numpy())
         average_loss[idx] = cur_percent_losses.mean()
-    fig = px.line(x=percentages, y=average_loss, title="sample_mean_graph_title",
-                  labels=dict(x="Percentage", y="Average loss"))
+        average_std[idx] = cur_percent_losses.std()
+
+    fig = go.Figure([
+        go.Scatter(name='average loss', x=percentages, y=average_loss, mode='lines',
+                   line=dict(color='rgb(31, 119, 180)')),
+        go.Scatter(name='upper bound', x=percentages, y=average_loss + 2 * average_std,
+                   mode='lines', showlegend=False, line=dict(color="lightgrey")),
+        go.Scatter(name='lower bound', x=percentages, y=average_loss - 2 * average_std,
+                   mode='lines', fill='tonexty', showlegend=False, line=dict(color="lightgrey")),
+        ])
     fig.show()
