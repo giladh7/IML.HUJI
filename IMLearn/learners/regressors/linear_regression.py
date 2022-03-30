@@ -72,6 +72,7 @@ class LinearRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
+        # adds a column of ones for intercept if needed
         if self.include_intercept_:
             ones_vector = np.ones(X.shape[0])
             X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)

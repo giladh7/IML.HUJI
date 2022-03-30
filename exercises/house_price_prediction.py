@@ -34,26 +34,22 @@ def load_data(filename: str):
     full_data = full_data[full_data["floors"] >= 1]
     # omit samples with antique build year
     full_data = full_data[full_data["yr_built"] >= 1800]
-    # # omit samples with too many bedrooms
-    # full_data = full_data[full_data['bedrooms'] <= 30]
-    # drop the most expensive sells - explain at the pdf
-    # full_data = full_data[full_data["price"] < np.quantile(full_data['price'], 0.99)]
-
-    full_data["does_renovation"] = full_data["yr_renovated"].apply(lambda reno: 0 if reno == 0 else 1)
-    # scaling the sqft_living with log, because it has too high values
-    full_data["sqft_living"] = np.log(full_data["sqft_living"])
-
-    # handle zip code with dummy variables
-    dummy_vars = pd.get_dummies(full_data["zipcode"], prefix='zip')
-    full_data = pd.concat([full_data, dummy_vars], axis=1)
-    full_data = full_data.drop('zip_98002.0', axis=1)
     # fill NAN's in view to 0
     full_data["view"].fillna(0)
-    # creating house age feature from yr_built and date
+    # drop the most expensive sells - explain at the pdf
+    full_data = full_data[full_data["price"] < np.quantile(full_data['price'], 0.99)]
+    # create features - house age and recent innovation
     full_data = full_data[full_data["date"].notnull()]
     full_data["date"] = pd.to_datetime(full_data["date"])
-    # creating house age from yr_built and date
     full_data["house_age"] = full_data["date"].dt.year - full_data["yr_built"]
+    full_data["recent_inovation"] = (full_data["date"].dt.year - full_data["yr_renovated"]).apply(
+        lambda reno: 1 if reno <= 10 else 0)
+    # scaling the sqft_living with log, because it has too high values
+    full_data["sqft_living"] = np.log(full_data["sqft_living"])
+    # handle zip code with dummy variables
+    dummy_vars = pd.get_dummies(full_data["zipcode"], prefix='zip_code')
+    full_data = pd.concat([full_data, dummy_vars], axis=1)
+    full_data = full_data.drop('zip_code_98001.0', axis=1)
     response = full_data["price"]
     full_data = full_data.drop(['id', 'date', 'zipcode', 'yr_built', 'yr_renovated', 'price'], axis=1)
     return full_data, response
