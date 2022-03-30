@@ -36,7 +36,17 @@ def load_data(filename: str):
     full_data = full_data[full_data["yr_built"] >= 1800]
     # # omit samples with too many bedrooms
     # full_data = full_data[full_data['bedrooms'] <= 30]
+    # drop the most expensive sells - explain at the pdf
+    # full_data = full_data[full_data["price"] < np.quantile(full_data['price'], 0.99)]
 
+    full_data["does_renovation"] = full_data["yr_renovated"].apply(lambda reno: 0 if reno == 0 else 1)
+    # scaling the sqft_living with log, because it has too high values
+    full_data["sqft_living"] = np.log(full_data["sqft_living"])
+
+    # handle zip code with dummy variables
+    dummy_vars = pd.get_dummies(full_data["zipcode"], prefix='zip')
+    full_data = pd.concat([full_data, dummy_vars], axis=1)
+    full_data = full_data.drop('zip_98002.0', axis=1)
     # fill NAN's in view to 0
     full_data["view"].fillna(0)
     # creating house age feature from yr_built and date
@@ -44,21 +54,9 @@ def load_data(filename: str):
     full_data["date"] = pd.to_datetime(full_data["date"])
     # creating house age from yr_built and date
     full_data["house_age"] = full_data["date"].dt.year - full_data["yr_built"]
-    # creating house renovation column
-    full_data["does_renovation"] = full_data["yr_renovated"].apply(lambda reno: 0 if reno == 0 else 1)
-
-    # scaling the sqft_living with log, because it has too high values
-    full_data["sqft_living"] = np.log(full_data["sqft_living"])
-    features = ['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors', 'waterfront',
-                'view', 'condition', 'grade', 'sqft_above', 'sqft_basement', 'lat', 'long',
-                'sqft_living15', 'sqft_lot15', "house_age", "does_renovation"]
-    # features = ['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors',
-    #             'view', 'condition', 'grade', 'sqft_above', 'sqft_basement',
-    #             'sqft_living15', 'sqft_lot15', "house_age", "waterfront"]
-
-    design_matrix = full_data[features]
     response = full_data["price"]
-    return design_matrix, response
+    full_data = full_data.drop(['id', 'date', 'zipcode', 'yr_built', 'yr_renovated', 'price'], axis=1)
+    return full_data, response
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
