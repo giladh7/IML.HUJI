@@ -9,6 +9,7 @@ import plotly.io as pio
 
 NAN_THRESHOLD = -70
 DATE_COLUMN = 2
+COUNTRY = "Israel"
 
 pio.templates.default = "simple_white"
 
@@ -42,8 +43,21 @@ if __name__ == '__main__':
     design_matrix, response = load_data(data_path)
 
     # Question 2 - Exploring data for specific country
+    # scatter plot of DayOfYear and Temp
+    country_df = design_matrix[design_matrix["Country"] == COUNTRY]
+    country_temp = response[country_df.index]
+    string_years = country_df["Year"].astype(str)
+    fig = px.scatter(country_df, x="DayOfYear", y=country_temp, color=string_years,
+                     title="Relation between day of year and temperatue in {country}".format(country=COUNTRY),
+                     labels={"DayOfYear": "Day of Year", "y": "Temperature"})
+    fig.show()
 
-    raise NotImplementedError()
+    country_by_month_std = country_df.groupby('Month', as_index=False).agg('std')
+    fig = px.bar(country_by_month_std, x='Month', y='Temp',
+                 title="Standard deviation of temperatures by month",
+                 labels={"Temp": "Std of temperatue"})
+    fig.show()
+
 
     # Question 3 - Exploring differences between countries
     raise NotImplementedError()
