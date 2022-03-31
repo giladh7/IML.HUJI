@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
+
+NAN_THRESHOLD = -70
+DATE_COLUMN = 2
+
 pio.templates.default = "simple_white"
 
 
@@ -21,18 +25,24 @@ def load_data(filename: str) -> (pd.DataFrame, pd.Series):
     -------
     Design matrix and response vector (Temp)
     """
-    df = pd.read_csv(filename, parse_dates=[2])
+    df = pd.read_csv(filename, parse_dates=[DATE_COLUMN]).drop_duplicates()
+    # drop samples with Nan - represented by -72.777778
+    df = df[df["Temp"] > NAN_THRESHOLD]
+    # add day of year column
+    df["DayOfYear"] = df["Date"].dt.dayofyear
 
     response = df["Temp"]
-    return df.drop(["Temp"]), response
+    return df.drop(["Temp", "Date"], axis=1), response
+
 
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of city temperature dataset
     data_path = "../datasets/City_Temperature.csv"
-    raise NotImplementedError()
+    design_matrix, response = load_data(data_path)
 
     # Question 2 - Exploring data for specific country
+
     raise NotImplementedError()
 
     # Question 3 - Exploring differences between countries
