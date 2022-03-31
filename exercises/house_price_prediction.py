@@ -37,17 +37,17 @@ def load_data(filename: str):
     # fill NAN's in view to 0
     full_data["view"].fillna(0)
     # drop the most expensive sells - explain at the pdf
-    full_data = full_data[full_data["price"] < np.quantile(full_data['price'], 0.99)]
+    # full_data = full_data[full_data["price"] < np.quantile(full_data['price'], 0.99)]
     # create features - house age and recent innovation
     full_data = full_data[full_data["date"].notnull()]
     full_data["date"] = pd.to_datetime(full_data["date"])
     full_data["house_age"] = full_data["date"].dt.year - full_data["yr_built"]
     full_data["recent_inovation"] = (full_data["date"].dt.year - full_data["yr_renovated"]).apply(
         lambda reno: 1 if reno <= 10 else 0)
-    # scaling the sqft_living with log, because it has too high values
+    # scaling the sqft_living with log, because it has too high values - explain at the pdf
     full_data["sqft_living"] = np.log(full_data["sqft_living"])
     # handle zip code with dummy variables
-    dummy_vars = pd.get_dummies(full_data["zipcode"], drop_first=True)
+    dummy_vars = pd.get_dummies(full_data["zipcode"], drop_first=True, prefix="zip_code")
     full_data = pd.concat([full_data, dummy_vars], axis=1)
     response = full_data["price"]
     full_data = full_data.drop(['id', 'date', 'zipcode', 'yr_built', 'yr_renovated', 'price'], axis=1)
@@ -73,14 +73,14 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
     """
     generic_plot_title = "Correlation between {feature} to response (r={pearson})"
     response_std = np.std(y)
-    for feature in X.columns:
+    for feature in X.columns[:30]:
         feature_response_cov = y.cov(X[feature])
         feature_response_std = np.std(X[feature])
         cur_pearson = feature_response_cov / feature_response_std / response_std
         fig = px.scatter(x=X[feature], y=y,
                          title=generic_plot_title.format(feature=feature, pearson=cur_pearson),
-                         labels=dict(x=feature, y="house price"))
-        # fig.write_image(output_path + "/" + feature + ".jpeg", engine="orca")
+                         labels=dict(x=str(feature), y="house price"))
+        fig.write_image(output_path + "/" + str(feature) + ".jpeg", engine="orca")
 
 
 if __name__ == '__main__':
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     # Question 2 - Feature evaluation with respect to response
     path_for_saved_plots = "C:/Users/gilad/Desktop/uni/current semester/IML.HUJI/temp"
-    # feature_evaluation(design_matrix, response, path_for_saved_plots)
+    feature_evaluation(design_matrix, response, path_for_saved_plots)
 
     # Question 3 - Split samples into training- and testing sets.
     X_train, y_train, X_test, y_test = split_train_test(design_matrix, response)
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
     model = LinearRegression()
     percentages = np.arange(10, 101) / 100
-    average_loss, average_std = np.zeros(91), np.zeros(91)
+    average_loss, percent_std = np.zeros(91), np.zeros(91)
     for idx, percent in enumerate(percentages):
         cur_percent_losses = np.zeros(10)
         for i in range(10):
@@ -115,14 +115,16 @@ if __name__ == '__main__':
             model.fit(cur_sample.to_numpy(), cur_results)
             cur_percent_losses[i] = model.loss(X_test.to_numpy(), y_test.to_numpy())
         average_loss[idx] = cur_percent_losses.mean()
-        average_std[idx] = cur_percent_losses.std()
+        percent_std[idx] = cur_percent_losses.std()
 
     fig = go.Figure([
         go.Scatter(name='average loss', x=percentages, y=average_loss, mode='lines',
                    line=dict(color='rgb(31, 119, 180)')),
-        go.Scatter(name='upper bound', x=percentages, y=average_loss + 2 * average_std,
+        go.Scatter(name='upper bound', x=percentages, y=average_loss + 2 * percent_std,
                    mode='lines', showlegend=False, line=dict(color="lightgrey")),
-        go.Scatter(name='lower bound', x=percentages, y=average_loss - 2 * average_std,
+        go.Scatter(name='lower bound', x=percentages, y=average_loss - 2 * percent_std,
                    mode='lines', fill='tonexty', showlegend=False, line=dict(color="lightgrey")),
         ])
+    fig.update_layout(yaxis_title='Mean loss', xaxis_title='Percent of training',
+                      title='Mean loss as function of percent of training')
     fig.show()
