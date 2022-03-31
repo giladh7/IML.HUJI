@@ -37,7 +37,7 @@ def load_data(filename: str):
     # fill NAN's in view to 0
     full_data["view"].fillna(0)
     # drop the most expensive sells - explain at the pdf
-    # full_data = full_data[full_data["price"] < np.quantile(full_data['price'], 0.99)]
+    full_data = full_data[full_data["price"] < np.quantile(full_data['price'], 0.99)]
     # create features - house age and recent innovation
     full_data = full_data[full_data["date"].notnull()]
     full_data["date"] = pd.to_datetime(full_data["date"])
@@ -86,12 +86,11 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    path_for_data = "C:/Users/gilad/Desktop/uni/current semester/" \
-                    "IML.HUJI/datasets/house_prices.csv"
+    path_for_data = "../datasets/house_prices.csv"
     design_matrix, response = load_data(path_for_data)
 
     # Question 2 - Feature evaluation with respect to response
-    path_for_saved_plots = "C:/Users/gilad/Desktop/uni/current semester/IML.HUJI/temp"
+    path_for_saved_plots = "../temp"
     feature_evaluation(design_matrix, response, path_for_saved_plots)
 
     # Question 3 - Split samples into training- and testing sets.
