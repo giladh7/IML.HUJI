@@ -66,7 +66,14 @@ if __name__ == '__main__':
     # fig.show()
 
     # Question 4 - Fitting model for different values of `k`
-    raise NotImplementedError()
+    X_train, y_train, X_test, y_test = split_train_test(country_df['DayOfYear'], country_df["Temp"])
+    k_values = np.arange(1, 11)
+    loss_values = np.zeros(3)
+    for idx,k in enumerate(k_values):
+        polynom_model = PolynomialFitting(k)
+        polynom_model.fit(X_train, y_train)
+        # loss_values[idx] = polynom_model.loss(X_test, y_test)
+    print(loss_values)
 
     # Question 5 - Evaluating fitted model on different countries
     raise NotImplementedError()
