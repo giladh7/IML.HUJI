@@ -68,12 +68,26 @@ if __name__ == '__main__':
     # Question 4 - Fitting model for different values of `k`
     X_train, y_train, X_test, y_test = split_train_test(country_df['DayOfYear'], country_df["Temp"])
     k_values = np.arange(1, 11)
-    loss_values = np.zeros(3)
+    loss_values = np.zeros(10)
     for idx,k in enumerate(k_values):
         polynom_model = PolynomialFitting(k)
         polynom_model.fit(X_train, y_train)
-        # loss_values[idx] = polynom_model.loss(X_test, y_test)
-    print(loss_values)
+        loss_values[idx] = np.round(polynom_model.loss(X_test, y_test), 2)
+        print("loss of polynomial model of degree {k}: {loss}".
+              format(k=k, loss=loss_values[idx]))
+
+    fig = px.bar(x=k_values, y=loss_values)
+    fig.show()
 
     # Question 5 - Evaluating fitted model on different countries
-    raise NotImplementedError()
+    K = 6
+    polyfit_model = PolynomialFitting(K)
+    polyfit_model.fit(country_df['DayOfYear'], country_df['Temp'])
+    countries = ['South Africa', 'The Netherlands', 'Jordan']
+    countries_error = []
+    for country in countries:
+        current_days = design_matrix[design_matrix['Country'] == country]['DayOfYear']
+        current_temp = design_matrix['Temp'][current_days.index]
+        countries_error.append(polyfit_model.loss(current_days, current_temp))
+    fig = px.bar(x=countries, y=countries_error)
+    fig.show()
