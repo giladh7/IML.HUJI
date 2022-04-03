@@ -76,11 +76,13 @@ if __name__ == '__main__':
         print("loss of polynomial model of degree {k}: {loss}".
               format(k=k, loss=loss_values[idx]))
 
-    fig = px.bar(x=k_values, y=loss_values)
+    fig = px.bar(x=k_values, y=loss_values, title="Loss as function of polynomial degree(k)",
+                 labels={"x": "Degree (k)", "y": "Mean Loss"})
+
     fig.show()
 
     # Question 5 - Evaluating fitted model on different countries
-    K = 6
+    K = 5
     polyfit_model = PolynomialFitting(K)
     polyfit_model.fit(country_df['DayOfYear'], country_df['Temp'])
     countries = ['South Africa', 'The Netherlands', 'Jordan']
@@ -89,5 +91,7 @@ if __name__ == '__main__':
         current_days = design_matrix[design_matrix['Country'] == country]['DayOfYear']
         current_temp = design_matrix['Temp'][current_days.index]
         countries_error.append(polyfit_model.loss(current_days, current_temp))
-    fig = px.bar(x=countries, y=countries_error)
+    fig = px.bar(x=countries, y=countries_error,
+                 title="Error of model trained israel records on different countries",
+                 labels={"x": "countries", "y": "Model Error"})
     fig.show()
