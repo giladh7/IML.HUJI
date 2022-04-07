@@ -31,6 +31,7 @@ class Perceptron(BaseEstimator):
             A callable to be called after each update of the model while fitting to given data
             Callable function should receive as input a Perceptron instance, current sample and current response
     """
+
     def __init__(self,
                  include_intercept: bool = True,
                  max_iter: int = 1000,
@@ -73,7 +74,25 @@ class Perceptron(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
-        raise NotImplementedError()
+        # create coefficients
+        if self.include_intercept_:
+            self.coefs_ = np.zeros(X.shape[1] + 1)
+            ones_vector = np.ones(X.shape[0])
+            X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
+        else:
+            self.coefs_ = np.zeros(len(X))
+
+        # perceptron algorithm implementation
+        for _ in range(self.max_iter_):
+            flag = True
+            for i in range(len(X)):
+                if y[i] * (self.coefs_.T @ X[i]) <= 0:
+                    self.coefs_ += y[i] * X[i]
+                    self.callback_(self, X[i], y[i])
+                    flag = False
+            if flag:
+                break
+
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -89,7 +108,11 @@ class Perceptron(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            ones_vector = np.ones(X.shape[0])
+            X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
+
+        return np.sign(X @ self.coefs_)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -109,4 +132,4 @@ class Perceptron(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        return misclassification_error(y, self.predict(X))
