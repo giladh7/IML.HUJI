@@ -80,7 +80,7 @@ class Perceptron(BaseEstimator):
             ones_vector = np.ones(X.shape[0])
             X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
         else:
-            self.coefs_ = np.zeros(len(X))
+            self.coefs_ = np.zeros(X.shape[1])
 
         # perceptron algorithm implementation
         for _ in range(self.max_iter_):
@@ -92,7 +92,6 @@ class Perceptron(BaseEstimator):
                     flag = False
             if flag:
                 break
-
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """

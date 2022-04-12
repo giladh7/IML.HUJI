@@ -44,14 +44,20 @@ def run_perceptron():
         X, y = data[:, :2], data[:, 2].astype(int)
 
         # Fit Perceptron and record loss in each fit iteration
-        losses = []
-        perceptron = Perceptron()
+        losses_values = []
+
+        def record_loss_callable(perceptron: Perceptron, sample: np.ndarray, response: int):
+            """ Callback function that saves loss during the fit"""
+            losses_values.append(perceptron.loss(X, y))
+
+        perceptron = Perceptron(callback=record_loss_callable)
+        perceptron.fitted_ = True  # bypass the problem of use 'loss' inside 'fit'
         perceptron.fit(X, y)
 
-        raise NotImplementedError()
-
         # Plot figure of loss as function of fitting iteration
-        raise NotImplementedError()
+        losses_index = np.arange(1, len(losses_values) + 1)
+        fig = px.line(x=losses_index, y=losses_values)
+        fig.show()
 
 
 def get_ellipse(mu: np.ndarray, cov: np.ndarray):
