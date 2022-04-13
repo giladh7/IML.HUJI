@@ -76,17 +76,15 @@ class Perceptron(BaseEstimator):
         """
         # create coefficients
         if self.include_intercept_:
-            self.coefs_ = np.zeros(X.shape[1] + 1)
             ones_vector = np.ones(X.shape[0])
             X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
-        else:
-            self.coefs_ = np.zeros(X.shape[1])
+        self.coefs_ = np.zeros(X.shape[1])
 
         # perceptron algorithm implementation
         for _ in range(self.max_iter_):
             flag = True
             for i in range(len(X)):
-                if y[i] * (self.coefs_.T @ X[i]) <= 0:
+                if y[i] * (self.coefs_ @ X[i]) <= 0:
                     self.coefs_ += y[i] * X[i]
                     self.callback_(self, X[i], y[i])
                     flag = False
