@@ -52,6 +52,8 @@ class LDA(BaseEstimator):
         self.classes_, n_k = np.unique(y, return_counts=True)
         n_features = X.shape[1]
         n_classes = self.classes_.shape[0]
+        # creating self.pi according to y
+        self.pi_ = n_k / y.shape[0]
 
         # crating mu by sum the match rows(samples)
         sum_by_class = pd.DataFrame(X).groupby(y).sum()
@@ -79,10 +81,20 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        a_k = self.mu_ @ self._cov_inv
-        # b_k =
-        # bayes_optimal_classifier =
-        raise NotImplementedError()
+        a_k = (self._cov_inv @ self.mu_.T).T
+        b_k = np.log(self.pi_) - 0.5 * np.diag(self.mu_ @ self._cov_inv @ self.mu_.T)
+        bayes_optimal_classifier = a_k @ X + b_k
+        if len(X.shape) == 1:
+            return self.classes_[np.argmax(bayes_optimal_classifier)]
+        return self.classes_[np.argmax(bayes_optimal_classifier, axis=1)]
+
+        # using for loop its looks like that:
+        # lizt = []
+        # for i in range(len(self.classes_)):
+        #     a_k = self._cov_inv @ self.mu_[i]
+        #     b_k = np.log(self.pi_[i]) - 0.5 * self.mu_[i] @ self._cov_inv @ self.mu_[i]
+        #     lizt.append(a_k.T @ X + b_k)
+        # return self.classes_[np.argmax(lizt)]
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -122,7 +134,7 @@ class LDA(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        return misclassification_error(self.predict(X), y)
 
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -130,7 +142,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
 y = np.array([1, 1, 1, 2, 2, 2])
 clf = LinearDiscriminantAnalysis(store_covariance=True)
-clf.fit(X,y)
-
-myclf = LDA().fit(X,y)
-
+clf.fit(X, y)
+print(clf.predict([[-0.8, -1]]))
+myclf = LDA().fit(X, y)
+print(myclf.predict(np.array([-0.8, -1])))
