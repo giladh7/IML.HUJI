@@ -4,7 +4,6 @@ from utils import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import atan2, pi
-from sklearn.naive_bayes import GaussianNB
 
 
 def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -82,7 +81,7 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
     xs = (l1 * np.cos(theta) * np.cos(t)) - (l2 * np.sin(theta) * np.sin(t))
     ys = (l1 * np.sin(theta) * np.cos(t)) + (l2 * np.cos(theta) * np.sin(t))
 
-    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
+    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black", showlegend=False)
 
 
 def compare_gaussian_classifiers():
@@ -94,47 +93,44 @@ def compare_gaussian_classifiers():
         X, y = load_dataset("../datasets/" + f)
 
         # Fit models and predict over training set
-        lda = LDA()
-        lda.fit(X, y)
+        lda = LDA().fit(X, y)
         lda_predictions = lda.predict(X)
-        gnb = GaussianNaiveBayes()
-        gnb.fit(X, y)
+        gnb = GaussianNaiveBayes().fit(X, y)
         gnb_predictions = gnb.predict(X)
-        real_gnb = GaussianNB()
-        real_gnb.fit(X, y)
-        real_gnb_prediction = real_gnb.predict(X)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-
+        lda_accuracy, gnb_accuracy = accuracy(y, lda_predictions), accuracy(y, gnb_predictions)
+        fig = make_subplots(rows=1, cols=2,
+                            subplot_titles=("LDA Model (accuracy: {})".format(lda_accuracy),
+                                            "Gaussian Naive Bayes Model (accuracy: {})".format(gnb_accuracy)))
+        fig.update_layout(title_text=f)
         # Add traces for data-points setting symbols and colors
-        fig = go.Figure([
-            go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
-                       marker=dict(color=lda_predictions, symbol=y)),
-        ])
-        # raise NotImplementedError()
-        #
-        # # Add `X` dots specifying fitted Gaussians' means
+        fig.add_trace(go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
+                                 marker=dict(color=lda_predictions, symbol=y),
+                                 showlegend=False),
+                      row=1, col=1)
+        fig.add_trace(go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
+                                 marker=dict(color=gnb_predictions, symbol=y),
+                                 showlegend=False),
+                      row=1, col=2)
+
+        # Add `X` dots specifying fitted Gaussians' means
         fig.add_trace(go.Scatter(x=lda.mu_[:, 0], y=lda.mu_[:, 1], mode='markers',
                                  marker=dict(color='black', symbol='x'),
-                                 showlegend=False))
-        fig.show()
-        fig = go.Figure([
-            go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
-                       marker=dict(color=gnb_predictions, symbol=y)),
-        ])
-        # raise NotImplementedError()
-        #
-        # # Add `X` dots specifying fitted Gaussians' means
+                                 showlegend=False), row=1, col=1)
         fig.add_trace(go.Scatter(x=gnb.mu_[:, 0], y=gnb.mu_[:, 1], mode='markers',
                                  marker=dict(color='black', symbol='x'),
-                                 showlegend=False))
-        fig.show()
+                                 showlegend=False), row=1, col=2)
 
-        # # Add ellipses depicting the covariances of the fitted Gaussians
-        # raise NotImplementedError()
+        # Add ellipses depicting the covariances of the fitted Gaussians
+        for gaus_num in [0, 1, 2]:
+            fig.add_trace(get_ellipse(lda.mu_[gaus_num], lda.cov_), row=1, col=1)
+            fig.add_trace(get_ellipse(gnb.mu_[gaus_num], np.diag(gnb.vars[gaus_num])),
+                          row=1, col=2)
+        fig.show()
 
 
 if __name__ == '__main__':
