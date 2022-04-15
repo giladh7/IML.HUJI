@@ -57,13 +57,13 @@ class LDA(BaseEstimator):
 
         # crating mu by sum the match rows(samples)
         sum_by_class = pd.DataFrame(X).groupby(y).sum()
-        self.mu_ = np.array(sum_by_class / n_k)
+        self.mu_ = np.array(sum_by_class.T / n_k).T
 
         # creating cov by iterate over classes
         self.cov_ = np.zeros((n_features, n_features))
         for idx, class_ in enumerate(self.classes_):
-            X_class = X[y == class_] - self.mu_[idx]
-            self.cov_ += X_class.T @ X_class
+            X_by_class = X[y == class_] - self.mu_[idx]
+            self.cov_ += X_by_class.T @ X_by_class
         self.cov_ /= (y.shape[0] - n_classes)
         self._cov_inv = inv(self.cov_)
 
@@ -81,20 +81,12 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        a_k = (self._cov_inv @ self.mu_.T).T
+        a_k = self.mu_ @ self._cov_inv.T
         b_k = np.log(self.pi_) - 0.5 * np.diag(self.mu_ @ self._cov_inv @ self.mu_.T)
-        bayes_optimal_classifier = a_k @ X + b_k
+        bayes_optimal_classifier = X @ a_k.T + b_k
         if len(X.shape) == 1:
             return self.classes_[np.argmax(bayes_optimal_classifier)]
         return self.classes_[np.argmax(bayes_optimal_classifier, axis=1)]
-
-        # using for loop its looks like that:
-        # lizt = []
-        # for i in range(len(self.classes_)):
-        #     a_k = self._cov_inv @ self.mu_[i]
-        #     b_k = np.log(self.pi_[i]) - 0.5 * self.mu_[i] @ self._cov_inv @ self.mu_[i]
-        #     lizt.append(a_k.T @ X + b_k)
-        # return self.classes_[np.argmax(lizt)]
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -135,14 +127,3 @@ class LDA(BaseEstimator):
         """
         from ...metrics import misclassification_error
         return misclassification_error(self.predict(X), y)
-
-
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-
-X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-y = np.array([1, 1, 1, 2, 2, 2])
-clf = LinearDiscriminantAnalysis(store_covariance=True)
-clf.fit(X, y)
-print(clf.predict([[-0.8, -1]]))
-myclf = LDA().fit(X, y)
-print(myclf.predict(np.array([-0.8, -1])))

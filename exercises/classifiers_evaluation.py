@@ -4,6 +4,7 @@ from utils import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import atan2, pi
+from sklearn.naive_bayes import GaussianNB
 
 
 def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -90,28 +91,53 @@ def compare_gaussian_classifiers():
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset("../datasets/" + f)
 
         # Fit models and predict over training set
-        raise NotImplementedError()
+        lda = LDA()
+        lda.fit(X, y)
+        lda_predictions = lda.predict(X)
+        gnb = GaussianNaiveBayes()
+        gnb.fit(X, y)
+        gnb_predictions = gnb.predict(X)
+        real_gnb = GaussianNB()
+        real_gnb.fit(X, y)
+        real_gnb_prediction = real_gnb.predict(X)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        raise NotImplementedError()
 
         # Add traces for data-points setting symbols and colors
-        raise NotImplementedError()
+        fig = go.Figure([
+            go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
+                       marker=dict(color=lda_predictions, symbol=y)),
+        ])
+        # raise NotImplementedError()
+        #
+        # # Add `X` dots specifying fitted Gaussians' means
+        fig.add_trace(go.Scatter(x=lda.mu_[:, 0], y=lda.mu_[:, 1], mode='markers',
+                                 marker=dict(color='black', symbol='x'),
+                                 showlegend=False))
+        fig.show()
+        fig = go.Figure([
+            go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers',
+                       marker=dict(color=gnb_predictions, symbol=y)),
+        ])
+        # raise NotImplementedError()
+        #
+        # # Add `X` dots specifying fitted Gaussians' means
+        fig.add_trace(go.Scatter(x=gnb.mu_[:, 0], y=gnb.mu_[:, 1], mode='markers',
+                                 marker=dict(color='black', symbol='x'),
+                                 showlegend=False))
+        fig.show()
 
-        # Add `X` dots specifying fitted Gaussians' means
-        raise NotImplementedError()
-
-        # Add ellipses depicting the covariances of the fitted Gaussians
-        raise NotImplementedError()
+        # # Add ellipses depicting the covariances of the fitted Gaussians
+        # raise NotImplementedError()
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    run_perceptron()
-    # compare_gaussian_classifiers()
+    # run_perceptron()
+    compare_gaussian_classifiers()
