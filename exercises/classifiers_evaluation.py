@@ -102,7 +102,8 @@ def compare_gaussian_classifiers():
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        lda_accuracy, gnb_accuracy = accuracy(y, lda_predictions), accuracy(y, gnb_predictions)
+        lda_accuracy = np.round(accuracy(y, lda_predictions), 3)
+        gnb_accuracy = np.round(accuracy(y, gnb_predictions), 3)
         fig = make_subplots(rows=1, cols=2,
                             subplot_titles=("LDA Model (accuracy: {})".format(lda_accuracy),
                                             "Gaussian Naive Bayes Model (accuracy: {})".format(gnb_accuracy)))
