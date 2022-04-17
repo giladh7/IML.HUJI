@@ -94,12 +94,19 @@ class GaussianNaiveBayes(BaseEstimator):
         -------
         likelihoods : np.ndarray of shape (n_samples, n_classes)
             The likelihood for each sample under each of the classes
-
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
-
-        raise NotImplementedError()
+        # d = X.shape[1]  # dimension of x - number of features
+        # total_likelihood = np.zeros((X.shape[0], self.classes_.size))
+        # for class_num in range(self.classes_.size):
+        #     normal_coef = 1 / np.sqrt((self.vars[class_num]) * ((2 * np.pi) ** d))
+        #     X_by_class = X - self.mu_[class_num]
+        #     total_likelihood[:, class_num] = np.exp(
+        #         -0.5 * np.diag(X_by_class @ X_by_class.T)) / self.vars[class_num]\
+        #                                      * self.pi_[class_num] \
+        #                                      * normal_coef
+        # return total_likelihood
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -120,3 +127,9 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         from ...metrics import misclassification_error
         return misclassification_error(self.predict(X), y)
+
+
+X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+y = np.array([1, 1, 1, 2, 2, 2])
+gnb = GaussianNaiveBayes().fit(X, y)
+print(gnb.likelihood(np.array([[1, -0.8]])))

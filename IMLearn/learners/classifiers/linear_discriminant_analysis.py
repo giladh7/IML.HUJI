@@ -105,8 +105,16 @@ class LDA(BaseEstimator):
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
-
-        raise NotImplementedError()
+        d = X.shape[1]  # dimension of x - number of features
+        normal_coef = 1 / np.sqrt((det(self.cov_) * ((2 * np.pi) ** d)))
+        total_likelihood = np.zeros((X.shape[0], self.classes_.size))
+        for class_num in range(self.classes_.size):
+            X_by_class = X - self.mu_[class_num]
+            total_likelihood[:, class_num] = np.exp(
+                -0.5 * np.diag(X_by_class @ self._cov_inv @ X_by_class.T)) \
+                                             * self.pi_[class_num] \
+                                             * normal_coef
+        return total_likelihood
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -127,3 +135,15 @@ class LDA(BaseEstimator):
         """
         from ...metrics import misclassification_error
         return misclassification_error(self.predict(X), y)
+
+
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+y = np.array([1, 1, 1, 2, 2, 2])
+clf = LinearDiscriminantAnalysis()
+clf.fit(X, y)
+print(clf.predict_proba([[-0.8, -1]]))
+lda = LDA()
+lda.fit(X, y)
+print(lda.likelihood(np.array([[-0.8, -1]])))
