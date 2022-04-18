@@ -55,7 +55,9 @@ def run_perceptron():
 
         # Plot figure of loss as function of fitting iteration
         losses_index = np.arange(1, len(losses_values) + 1)
-        fig = px.line(x=losses_index, y=losses_values)
+        fig = px.line(x=losses_index, y=losses_values,
+                      title="Perceptron Classification Loss During Fitting - " + n,
+                      labels={"x": "Update Number", "y": "Loss Rate"})
         fig.show()
 
 

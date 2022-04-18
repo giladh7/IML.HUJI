@@ -44,7 +44,10 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         # classes are the all options for response, n_k records the count of each y_i
         self.classes_, n_k = np.unique(y, return_counts=True)
-        n_features = X.shape[1]
+        if len(X.shape) == 1:
+            n_features = 1
+        else:
+            n_features = X.shape[1]
         n_classes = self.classes_.shape[0]
         # creating self.pi according to y
         self.pi_ = n_k / y.shape[0]
@@ -97,16 +100,16 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
-        # d = X.shape[1]  # dimension of x - number of features
-        # total_likelihood = np.zeros((X.shape[0], self.classes_.size))
-        # for class_num in range(self.classes_.size):
-        #     normal_coef = 1 / np.sqrt((self.vars[class_num]) * ((2 * np.pi) ** d))
-        #     X_by_class = X - self.mu_[class_num]
-        #     total_likelihood[:, class_num] = np.exp(
-        #         -0.5 * np.diag(X_by_class @ X_by_class.T)) / self.vars[class_num]\
-        #                                      * self.pi_[class_num] \
-        #                                      * normal_coef
-        # return total_likelihood
+
+        d = X.shape[1]  # dimension of x - number of features
+        total_likelihood = np.zeros((X.shape[0], self.classes_.size))
+        for class_num in range(self.classes_.size):
+            normal_coef = 1 / np.sqrt((self.vars[class_num]) * (2 * np.pi))
+            X_by_class = X - self.mu_[class_num]
+            exponent = np.exp(-0.5 / self.vars[class_num] * X_by_class ** 2)
+            total_likelihood[:, class_num] = np.prod(exponent * normal_coef, axis=1)
+
+        return total_likelihood
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -129,7 +132,3 @@ class GaussianNaiveBayes(BaseEstimator):
         return misclassification_error(self.predict(X), y)
 
 
-X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-y = np.array([1, 1, 1, 2, 2, 2])
-gnb = GaussianNaiveBayes().fit(X, y)
-print(gnb.likelihood(np.array([[1, -0.8]])))
