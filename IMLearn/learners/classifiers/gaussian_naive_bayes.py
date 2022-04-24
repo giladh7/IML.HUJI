@@ -76,13 +76,7 @@ class GaussianNaiveBayes(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        bayes_per_class = np.zeros((X.shape[0], self.classes_.size))
-        for idx, k in enumerate(self.classes_):
-            cur_class_val = np.log(self.pi_[idx]) \
-                            - 0.5 * (np.log(2 * np.pi * self.vars[idx]) +
-                                     (X - self.mu_[idx]) ** 2 / self.vars[idx]).sum(axis=1)
-            bayes_per_class[:, idx] = cur_class_val
-        return self.classes_[np.argmax(bayes_per_class, axis=1)]
+        return self.classes_[np.argmax(self.likelihood(X), axis=1)]
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -130,5 +124,3 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         from ...metrics import misclassification_error
         return misclassification_error(self.predict(X), y)
-
-

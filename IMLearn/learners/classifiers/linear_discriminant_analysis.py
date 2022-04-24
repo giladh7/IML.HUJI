@@ -81,12 +81,7 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        a_k = self.mu_ @ self._cov_inv.T
-        b_k = np.log(self.pi_) - 0.5 * np.diag(self.mu_ @ self._cov_inv @ self.mu_.T)
-        bayes_optimal_classifier = X @ a_k.T + b_k
-        if len(X.shape) == 1:
-            return self.classes_[np.argmax(bayes_optimal_classifier)]
-        return self.classes_[np.argmax(bayes_optimal_classifier, axis=1)]
+        return self.classes_[np.argmax(self.likelihood(X), axis=1)]
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
