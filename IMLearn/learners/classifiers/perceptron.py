@@ -85,6 +85,7 @@ class Perceptron(BaseEstimator):
             flag = True
             for i in range(len(X)):
                 if y[i] * (self.coefs_ @ X[i]) <= 0:
+                    self.fitted_ = True
                     self.coefs_ += y[i] * X[i]
                     self.callback_(self, X[i], y[i])
                     flag = False

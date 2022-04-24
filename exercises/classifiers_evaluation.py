@@ -50,7 +50,6 @@ def run_perceptron():
             losses_values.append(perceptron.loss(X, y))
 
         perceptron = Perceptron(callback=record_loss_callable)
-        perceptron.fitted_ = True  # bypass the problem of use 'loss' inside 'fit'
         perceptron.fit(X, y)
 
         # Plot figure of loss as function of fitting iteration
