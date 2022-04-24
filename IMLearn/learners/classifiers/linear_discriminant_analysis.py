@@ -81,6 +81,7 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
+        # choose the highest "likelihood" per sample
         return self.classes_[np.argmax(self.likelihood(X), axis=1)]
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
@@ -101,8 +102,10 @@ class LDA(BaseEstimator):
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
         d = X.shape[1]  # dimension of x - number of features
+        # calculate the class-common normal coefficient
         normal_coef = 1 / np.sqrt((det(self.cov_) * ((2 * np.pi) ** d)))
         total_likelihood = np.zeros((X.shape[0], self.classes_.size))
+        # calculate likelihood per class according to gaussian formulas
         for class_num in range(self.classes_.size):
             X_by_class = X - self.mu_[class_num]
             total_likelihood[:, class_num] = np.exp(
