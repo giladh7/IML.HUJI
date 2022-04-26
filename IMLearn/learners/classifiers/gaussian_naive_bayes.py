@@ -57,10 +57,11 @@ class GaussianNaiveBayes(BaseEstimator):
         self.mu_ = np.array(sum_by_class.T / n_k).T
 
         # creating cov by iterate over classes
-        self.vars = np.zeros((n_classes, n_features))
+        self.vars_ = np.zeros((n_classes, n_features))
         for idx, class_ in enumerate(self.classes_):
             X_by_class = X[y == class_]
-            self.vars[idx] = np.var(X_by_class, axis=0)
+            # ddof = 1 for unbiased estimator
+            self.vars_[idx] = np.var(X_by_class, axis=0, ddof=1)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -100,9 +101,9 @@ class GaussianNaiveBayes(BaseEstimator):
         total_likelihood = np.zeros((X.shape[0], self.classes_.size))
         # calculate likelihood and normal coef per class according to gaussian formulas
         for class_num in range(self.classes_.size):
-            normal_coef = 1 / np.sqrt((self.vars[class_num]) * (2 * np.pi))
+            normal_coef = 1 / np.sqrt((self.vars_[class_num]) * (2 * np.pi))
             X_by_class = X - self.mu_[class_num]
-            exponent = np.exp(-0.5 / self.vars[class_num] * X_by_class ** 2)
+            exponent = np.exp(-0.5 / self.vars_[class_num] * X_by_class ** 2)
             total_likelihood[:, class_num] = np.prod(exponent * normal_coef, axis=1)
 
         return total_likelihood
