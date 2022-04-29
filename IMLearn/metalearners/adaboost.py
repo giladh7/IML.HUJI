@@ -1,5 +1,5 @@
 import numpy as np
-from ...base import BaseEstimator
+from ..base import BaseEstimator
 from typing import Callable, NoReturn
 
 
@@ -48,6 +48,13 @@ class AdaBoost(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
+        # initialize D with uniform distribution
+        D = np.full(X.shape[0], 1/X.shape[0])
+        for iteration in range(self.iterations_):
+            model = self.wl_()
+            self.models_.append(model)
+            # err = D[]
+
         raise NotImplementedError()
 
     def _predict(self, X):
