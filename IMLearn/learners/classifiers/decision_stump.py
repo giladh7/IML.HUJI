@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import NoReturn, Tuple
+from typing import Tuple, NoReturn
 from ...base import BaseEstimator
 from ...metrics.loss_functions import misclassification_error
 import numpy as np
@@ -75,8 +75,7 @@ class DecisionStump(BaseEstimator):
         """
         return np.where(X[:, self.j_] >= self.threshold_, self.sign_, -self.sign_)
 
-    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) \
-            -> Tuple[float, float]:
+    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
         """
         Given a feature vector and labels, find a threshold by which to perform a split
         The threshold is found according to the value minimizing the misclassification
