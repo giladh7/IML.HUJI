@@ -107,9 +107,10 @@ class DecisionStump(BaseEstimator):
         """
         n_samples = values.size
         thr, thr_err = None, 2
+        signed_labels = np.sign(labels)  # needed for handling weighted labels
         for value in values:
-            mistake_minus = np.where(values < value, labels) != -sign
-            mistake_plus = np.where(values >= value, labels) != sign
+            mistake_minus = np.where(values < value, signed_labels) != -sign
+            mistake_plus = np.where(values >= value, signed_labels) != sign
             cur_err = (mistake_plus + mistake_minus) / n_samples
             if cur_err < thr_err:
                 thr, thr_err = value, cur_err
