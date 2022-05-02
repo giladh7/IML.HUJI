@@ -38,11 +38,17 @@ def generate_data(n: int, noise_ratio: float) -> Tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
-def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=500):
+def fit_and_evaluate_adaboost(noise, n_learners=15, train_size=5000, test_size=500):
     (train_X, train_y), (test_X, test_y) = generate_data(train_size, noise), generate_data(test_size, noise)
 
     # Question 1: Train- and test errors of AdaBoost in noiseless case
-    raise NotImplementedError()
+
+    adaboost_model = AdaBoost(wl=lambda: DecisionStump(), iterations=n_learners).fit(train_X, train_y)
+    test_errors = np.zeros(n_learners)
+    for iteration in range(n_learners):
+        test_errors[iteration] = adaboost_model.partial_loss(test_X, test_y, iteration)
+    fig = go.Figure(go.Scatter(x=np.arange(n_learners + 1), y=test_errors))
+    fig.show()
 
     # Question 2: Plotting decision surfaces
     T = [5, 50, 100, 250]
@@ -58,4 +64,5 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
 
 if __name__ == '__main__':
     np.random.seed(0)
+    fit_and_evaluate_adaboost(noise=0)
     raise NotImplementedError()

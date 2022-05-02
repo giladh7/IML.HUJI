@@ -2,7 +2,7 @@ import numpy as np
 from ..base import BaseEstimator
 from typing import Callable, NoReturn
 from ..metrics.loss_functions import misclassification_error
-
+from sklearn.tree import DecisionTreeClassifier
 
 
 class AdaBoost(BaseEstimator):
@@ -54,12 +54,14 @@ class AdaBoost(BaseEstimator):
         self.D = np.full(X.shape[0], 1 / X.shape[0])
         self.models_, self.weights_ = [], []
         for iteration in range(self.iterations_):
-            model = self.wl_().fit(X, y * self.D)
+            model = DecisionTreeClassifier(max_depth=1).fit(X, y, sample_weight=self.D)
+            # model = self.wl_().fit(X, y * self.D)
             self.models_.append(model)
             error = np.where(model.predict(X) != y, self.D, 0).mean()
             weight = 0.5 * np.log(1 / error - 1)
             self.weights_.append(weight)
-            self.D = self.D * np.exp(-y * weight * model.predict(X))
+            self.D = self.D * np.exp(weight * (np.not_equal(y, model.predict(X))).astype(int))
+            # self.D = self.D * np.exp(-y * weight * model.predict(X))
             self.D /= self.D.sum()
 
     def _predict(self, X):
@@ -95,7 +97,7 @@ class AdaBoost(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        return self.partial_loss(X,y, self.iterations_)
+        return self.partial_loss(X, y, self.iterations_)
 
     def partial_predict(self, X: np.ndarray, T: int) -> np.ndarray:
         """
@@ -139,4 +141,4 @@ class AdaBoost(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        return misclassification_error(y, self.partial_predict(X,T))
+        return misclassification_error(y, self.partial_predict(X, T))

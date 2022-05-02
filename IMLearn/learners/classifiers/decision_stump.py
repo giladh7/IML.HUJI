@@ -49,6 +49,7 @@ class DecisionStump(BaseEstimator):
         for sign, feature in product([-1, 1], range(n_features)):
             cur_threshold, cur_error = self._find_threshold(X[:, feature], y, sign)
             if cur_error < min_error:
+                min_error = cur_error
                 self.threshold_, self.j_, self.sign_ = cur_threshold, feature, sign
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
@@ -109,9 +110,8 @@ class DecisionStump(BaseEstimator):
         thr, thr_err = None, 2
         signed_labels = np.sign(labels)  # needed for handling weighted labels
         for value in values:
-            mistake_minus = np.where(values < value, signed_labels) != -sign
-            mistake_plus = np.where(values >= value, signed_labels) != sign
-            cur_err = (mistake_plus + mistake_minus) / n_samples
+            mistakes = np.where(values >= value, sign, -sign) != signed_labels
+            cur_err = np.mean(np.abs(labels[mistakes]))
             if cur_err < thr_err:
                 thr, thr_err = value, cur_err
         return thr, thr_err
