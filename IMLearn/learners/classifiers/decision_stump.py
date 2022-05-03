@@ -107,11 +107,14 @@ class DecisionStump(BaseEstimator):
         which equal to or above the threshold are predicted as `sign`
         """
         n_samples = values.size
-        thr, thr_err = None, 2
+        sort_index = np.argsort(values)
+        values, labels = values[sort_index], labels[sort_index]
         signed_labels = np.sign(labels)  # needed for handling weighted labels
-        for value in values:
-            mistakes = np.where(values >= value, sign, -sign) != signed_labels
-            cur_err = np.mean(np.abs(labels[mistakes]))
+        prediction = np.full(labels.size, sign)
+        thr, thr_err = values[0], np.abs(labels[prediction != signed_labels]).sum() / n_samples
+        for idx, value in enumerate(values[1:]):
+            prediction[idx] = -sign
+            cur_err = np.abs(labels[prediction != signed_labels]).sum() / n_samples
             if cur_err < thr_err:
                 thr, thr_err = value, cur_err
         return thr, thr_err
