@@ -50,19 +50,19 @@ class AdaBoost(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        # initialize D with uniform distribution
-        self.D = np.full(X.shape[0], 1 / X.shape[0])
+        self.D = np.full(X.shape[0], 1 / X.shape[0]) # initialize D with uniform distribution
         self.models_, self.weights_ = [], []
         for iteration in range(self.iterations_):
-            # model = DecisionTreeClassifier(max_depth=1).fit(X, y, sample_weight=self.D)
             model = self.wl_().fit(X, y * self.D)
             self.models_.append(model)
+
             prediction = model.predict(X)
+            # error = (self.D * (prediction != y)).sum()
             error = np.where(prediction != y, self.D, 0).sum()
             weight = 0.5 * np.log(1 / error - 1)
             self.weights_.append(weight)
             self.D = self.D * np.exp(-y * weight * model.predict(X))
-            self.D /= self.D.sum()
+            self.D /= self.D.sum()  # normalize
 
     def _predict(self, X):
         """
@@ -117,7 +117,7 @@ class AdaBoost(BaseEstimator):
             Predicted responses of given samples
         """
         total_sum = np.zeros(X.shape[0])
-        for model in range(T + 1):
+        for model in range(T):
             total_sum += self.weights_[model] * self.models_[model].predict(X)
         return np.sign(total_sum)
 
