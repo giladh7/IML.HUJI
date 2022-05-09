@@ -75,18 +75,35 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
         fig.show()
 
     # Question 3: Decision surface of best performing ensemble
+    if noise == 0:
+        ensemble_size = np.argmin(test_errors) + 1
+        accuracy = 1 - np.min(test_errors)
+        title = "Best ensemble size decision boundary (size = {size}, accuracy = {accuracy})". \
+            format(size=ensemble_size, accuracy=accuracy)
+        fig = go.Figure([decision_surface(lambda x: adaboost_model.partial_predict(x, ensemble_size), lims[0], lims[1],
+                                          showscale=False),
+                         go.Scatter(x=test_X[:, 0], y=test_X[:, 1], mode='markers', showlegend=False,
+                                    marker=dict(color=test_y, colorscale=class_colors(2)))])
+        fig.update_layout(title=title)
+        fig.show()
+        print(np.argmin(test_errors))
+        print(np.min(test_errors))
 
     # Question 4: Decision surface with weighted samples
+    if noise == 0:
+        transform_coef = 15
+    else:
+        transform_coef = 5
     fig = go.Figure([decision_surface(lambda x: adaboost_model.partial_predict(x, n_learners), lims[0], lims[1],
                                       showscale=False),
                      go.Scatter(x=train_X[:, 0], y=train_X[:, 1], mode='markers', showlegend=False,
                                 marker=dict(color=train_y, colorscale=class_colors(2),
-                                            size=(adaboost_model.D / adaboost_model.D.max()) * 5))])
+                                            size=(adaboost_model.D / adaboost_model.D.max()) * transform_coef))])
     fig.update_layout(title="Decision surface with weighted samples " + title_suffix)
     fig.show()
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # fit_and_evaluate_adaboost(noise=0)
+    fit_and_evaluate_adaboost(noise=0)
     fit_and_evaluate_adaboost(noise=0.4)

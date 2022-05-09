@@ -110,13 +110,22 @@ class DecisionStump(BaseEstimator):
         sort_index = np.argsort(values)
         values, labels = values[sort_index], labels[sort_index]
         signed_labels = np.sign(labels)  # needed for handling weighted labels
+        # divide by the first value - all samples classified as sign
         prediction = np.full(labels.size, sign)
         thr, thr_err = values[0], np.abs(labels[prediction != signed_labels]).sum() / n_samples
+
         for idx, value in enumerate(values[1:]):
             prediction[idx] = -sign
             cur_err = np.abs(labels[prediction != signed_labels]).sum() / n_samples
             if cur_err < thr_err:
                 thr, thr_err = value, cur_err
+
+        # last option - all samples classified as -sign
+        prediction = np.full(labels.size, -sign)
+        last_thr, last_thr_err = np.inf, np.abs(labels[prediction != signed_labels]).sum() / n_samples
+        if last_thr_err < thr_err:
+            thr, thr_err = last_thr, last_thr_err
+
         return thr, thr_err
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:

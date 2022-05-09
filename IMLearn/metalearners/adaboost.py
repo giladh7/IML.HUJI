@@ -50,12 +50,11 @@ class AdaBoost(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        self.D = np.full(X.shape[0], 1 / X.shape[0]) # initialize D with uniform distribution
+        self.D = np.full(X.shape[0], 1 / X.shape[0])  # initialize D with uniform distribution
         self.models_, self.weights_ = [], []
         for iteration in range(self.iterations_):
             model = self.wl_().fit(X, y * self.D)
             self.models_.append(model)
-
             prediction = model.predict(X)
             # error = (self.D * (prediction != y)).sum()
             error = np.where(prediction != y, self.D, 0).sum()
