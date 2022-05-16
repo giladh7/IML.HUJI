@@ -27,10 +27,33 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     """
     # Question 1 - Generate dataset for model f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) + eps for eps Gaussian noise
     # and split into training- and testing portions
-    raise NotImplementedError()
+    X = np.linspace(-1.2, 2, n_samples)
+    epsilon = np.random.normal(0, noise, n_samples)
+    polynom = lambda x: (x + 3) * (x + 2) * (x + 1) * (x - 1) * (x - 2)
+    noiseless_y = polynom(X)
+    y = noiseless_y + epsilon
+    train_X, train_y, test_X, test_y = split_train_test(pd.DataFrame(X), pd.Series(y), 2.0 / 3)
+    train_X, train_y, test_X, test_y = train_X[0].to_numpy(), train_y.to_numpy(), \
+                                       test_X[0].to_numpy(), test_y.to_numpy()
+    # scatter plot
+    fig = go.Figure([go.Scatter(x=X, y=noiseless_y, mode='lines', name="True (noiseless) Model"),
+                     go.Scatter(x=train_X, y=train_y, mode='markers', name="Train Set"),
+                     go.Scatter(x=test_X, y=test_y, mode='markers',
+                                marker=dict(color="#0000ff"), name="Test Set"),
+                     ])
+    fig.update_layout(height=400, title_text="True model and test and size sets")
+    # fig.show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
-    raise NotImplementedError()
+    k_s = np.arange(11)
+    train_errors, test_errors = np.zeros(11), np.zeros(11)
+    for k in k_s:
+        errors = cross_validate(PolynomialFitting(k), train_X, train_y, mean_square_error, 5)
+        train_errors[k], test_errors[k] = errors
+    fig = go.Figure([go.Scatter(x=k_s, y=train_errors, name="Train error"),
+                     go.Scatter(x=k_s, y=test_errors, name="Test error")])
+    fig.update_layout(title_text="Error as a function of Polynomial degree")
+    fig.show()
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
     raise NotImplementedError()
@@ -61,4 +84,5 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
 if __name__ == '__main__':
     np.random.seed(0)
+    select_polynomial_degree()
     raise NotImplementedError()

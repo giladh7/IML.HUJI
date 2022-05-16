@@ -86,8 +86,6 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
                                     marker=dict(color=test_y, colorscale=class_colors(2)))])
         fig.update_layout(title=title)
         fig.show()
-        print(np.argmin(test_errors))
-        print(np.min(test_errors))
 
     # Question 4: Decision surface with weighted samples
     if noise == 0:
