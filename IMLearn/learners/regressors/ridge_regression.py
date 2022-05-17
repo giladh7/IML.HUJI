@@ -33,7 +33,6 @@ class RidgeRegression(BaseEstimator):
             `LinearRegression.fit` function.
         """
 
-
         """
         Initialize a ridge regression model
         :param lam: scalar value of regularization parameter
@@ -59,7 +58,13 @@ class RidgeRegression(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            ones_vector = np.ones(X.shape[0])
+            X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
+        d = X.shape[1]
+        I = np.identity(d)
+        I[0][0] = 0  # avoid regularizing the intercept
+        self.coefs_ = np.linalg.inv(X.T @ X + self.lam_ * I) @ X.T @ y
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +80,10 @@ class RidgeRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            ones_vector = np.ones(X.shape[0])
+            X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
+        return X @ self.coefs_
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -94,4 +102,5 @@ class RidgeRegression(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        raise NotImplementedError()
+        from ...metrics.loss_functions import mean_square_error
+        return mean_square_error(y, self.predict(X))
