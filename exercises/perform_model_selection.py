@@ -82,9 +82,21 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
     lambdas = np.linspace(0.00001, 5, n_evaluations)
+    ridge_test_errors, ridge_train_errors = np.zeros(n_evaluations), np.zeros(n_evaluations)
+    lasso_test_errors, lasso_train_errors = np.zeros(n_evaluations), np.zeros(n_evaluations)
 
-    raise NotImplementedError()
+    for idx, lam in enumerate(lambdas):
+        ridge_test_errors[idx], ridge_train_errors[idx] = cross_validate(
+            RidgeRegression(lam), train_x, train_y, mean_square_error)
+        lasso_test_errors[idx], lasso_train_errors[idx] = cross_validate(
+            Lasso(lam), train_x, train_y, mean_square_error)
 
+    fig = go.Figure([go.Scatter(x=lambdas, y=ridge_train_errors, name="Ridge Train"),
+                         go.Scatter(x=lambdas, y=ridge_test_errors, name="Ridge Test"),
+                         go.Scatter(x=lambdas, y=lasso_train_errors, name="Lasso Train"),
+                         go.Scatter(x=lambdas, y=lasso_test_errors, name="Lasso Test")])
+    fig.update_layout(title_text="Ridge and Lasso errors as function of lambda")
+    fig.show()
     # Question 8 - Compare best Ridge model, best Lasso model and Least Squares model
     raise NotImplementedError()
 
@@ -92,9 +104,10 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 if __name__ == '__main__':
     np.random.seed(0)
     # questions 1-3
-    select_polynomial_degree()
+    # select_polynomial_degree()
     # question 4
     # select_polynomial_degree(noise=0)
     # question 5
     # select_polynomial_degree(n_samples=1500, noise=10)
 
+    select_regularization_parameter()
