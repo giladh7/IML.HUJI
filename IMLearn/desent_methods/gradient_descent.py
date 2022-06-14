@@ -119,4 +119,9 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        raise NotImplementedError()
+        if X == None:
+            solution = np.zero(1)
+        else:
+            solution = np.zero(np.shape[1])
+        eta, sum = 0, 0
+        for _ in range(self.max_iter_):
