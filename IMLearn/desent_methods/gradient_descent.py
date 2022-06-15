@@ -129,7 +129,7 @@ class GradientDescent:
             # computing x^t+1
             eta = self.learning_rate_.lr_step(t=iter_num)
             cur_solution = cur_solution - eta * f.compute_jacobian()
-            delta = np.linalg.norm(cur_solution, f.weights)
+            delta = np.linalg.norm(cur_solution - f.weights)
 
             # updating variables
             iter_num += 1
