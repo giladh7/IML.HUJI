@@ -136,7 +136,7 @@ class GradientDescent:
             f.weights = cur_solution
             sum_solutions += cur_solution
             if f.compute_output() < best_val:
-                best_solution, best_val = f.weights, f.compute_output()
+                best_solution, best_val = f.weights.copy(), f.compute_output()
 
             self.callback_(self, [f.weights, f.compute_output(X=X, y=y), f.compute_jacobian(X=X, y=y),
                                   iter_num, eta, delta])

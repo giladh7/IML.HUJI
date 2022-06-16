@@ -97,18 +97,32 @@ def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e /
                 title = f"L1 model (eta = {eta})".format(eta=eta)
             else:
                 title = f"L2 model (eta = {eta})".format(eta=eta)
+
             plot_descent_path(model, np.array(weights), title)#.show()
-
-
-
-
-
+            fig = go.Figure(go.Scatter(x=np.arange(GD_solver.max_iter_), y=values, mode='markers'))
+            fig.update_layout(title=title)
+            # fig.show()
 
 
 def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                     eta: float = .1,
                                     gammas: Tuple[float] = (.9, .95, .99, 1)):
     # Optimize the L1 objective using different decay-rate values of the exponentially decaying learning rate
+
+    figs = []
+    for gamma in gammas:
+        cur_LR = ExponentialLR(eta, gamma)
+        convergences = []
+        GD_solver = GradientDescent(cur_LR,
+                                    callback=lambda model, lst: convergences.append(lst[-1]))
+
+        GD_solver.fit(L1(init.copy()), None, None)
+        figs.append(go.Scatter(x=np.arange(GD_solver.max_iter_), y=convergences, name=gamma))
+
+    go.Figure(data=figs,).show()
+
+
+
     raise NotImplementedError()
 
     # Plot algorithm's convergence for the different values of gamma
