@@ -93,6 +93,14 @@ class LogisticRegression(BaseEstimator):
             X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
         init_weight = np.random.randn(X.shape[1])
 
+        logistic_model = LogisticModule(init_weight)
+        if self.penalty_ == 'none':
+            model = logistic_model
+        elif self.penalty_ == "l1":
+            model = RegularizedModule(logistic_model, L1(init_weight), self.lam_)
+        else:
+            model = RegularizedModule(logistic_model, L2(init_weight), self.lam_)
+        self.coefs_ = self.solver_.fit(model, X, y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -108,7 +116,7 @@ class LogisticRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return np.where(self.predict_proba(X) >= self.alpha_, 1, 0)
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
@@ -124,7 +132,10 @@ class LogisticRegression(BaseEstimator):
         probabilities: ndarray of shape (n_samples,)
             Probability of each sample being classified as `1` according to the fitted model
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            ones_vector = np.ones(X.shape[0])
+            X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
+        return 1 / (1 + np.exp(X @ self.coefs_))
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -143,4 +154,5 @@ class LogisticRegression(BaseEstimator):
         loss : float
             Performance under misclassification error
         """
-        raise NotImplementedError()
+        from IMLearn.metrics.loss_functions import misclassification_error
+        return misclassification_error(y, self.predict(X))
