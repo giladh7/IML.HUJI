@@ -86,23 +86,31 @@ def get_gd_state_recorder_callback() -> Tuple[Callable[[], None], List[np.ndarra
 
 def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                  etas: Tuple[float] = (1, .1, .01, .001)):
+    lowest_loss = []
     for eta in etas:
-        for model in (L1, L2):
+        for model, name in ((L1, "L1"), (L2, "L2")):
             cur_LR = FixedLR(eta)
             callback, values, weights = get_gd_state_recorder_callback()
 
             GD_solver = GradientDescent(cur_LR, callback=callback)
             GD_solver.fit(model(init.copy()), None, None)
-            if model == L1:
-                title = f"L1 model (eta = {eta})".format(eta=eta)
-            else:
-                title = f"L2 model (eta = {eta})".format(eta=eta)
+            title = f"{name} model convergence rate as function of iteration number (eta = {eta})".format(name=name,
+                                                                                                          eta=eta)
+            plot_descent_path(model, np.array(weights), title)  # .show()
 
-            plot_descent_path(model, np.array(weights), title)#.show()
             fig = go.Figure(go.Scatter(x=np.arange(GD_solver.max_iter_), y=values, mode='markers'))
             fig.update_layout(title=title)
+            fig.update_xaxes(title_text="Iteration Number")
+            fig.update_yaxes(title_text=f"{name} Norm".format(name=name))
             # fig.show()
 
+            lowest_loss.append(np.min(values))
+
+    print(lowest_loss)
+    lowest_loss = np.array(lowest_loss)
+    lowest_loss.shape = (len(etas), 2)
+    for i in range(len(lowest_loss)):
+        print("eta = ", etas[i], "L1: ", lowest_loss[i][0], "  L2: ", lowest_loss[i][1])
 
 def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                     eta: float = .1,
@@ -119,9 +127,7 @@ def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.
         GD_solver.fit(L1(init.copy()), None, None)
         figs.append(go.Scatter(x=np.arange(GD_solver.max_iter_), y=convergences, name=gamma))
 
-    go.Figure(data=figs,).show()
-
-
+    go.Figure(data=figs, ).show()
 
     raise NotImplementedError()
 
@@ -178,6 +184,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    compare_fixed_learning_rates()
+    # compare_fixed_learning_rates()
     compare_exponential_decay_rates()
     fit_logistic_regression()
