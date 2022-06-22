@@ -92,14 +92,17 @@ class LogisticRegression(BaseEstimator):
             ones_vector = np.ones(X.shape[0])
             X = np.concatenate((ones_vector[:, np.newaxis], X), axis=1)
         init_weight = np.random.randn(X.shape[1]) / np.sqrt(X.shape[1])
+        reg_init = init_weight
+        if self.include_intercept_:
+            reg_init = reg_init[1:]
 
         logistic_model = LogisticModule(init_weight)
         if self.penalty_ == 'none':
             model = logistic_model
         elif self.penalty_ == "l1":
-            model = RegularizedModule(logistic_model, L1(init_weight), self.lam_, init_weight, self.include_intercept_)
-        else:
-            model = RegularizedModule(logistic_model, L2(init_weight), self.lam_, init_weight, self.include_intercept_)
+            model = RegularizedModule(logistic_model, L1(reg_init), self.lam_, init_weight, self.include_intercept_)
+        elif self.penalty_ == "l2":
+            model = RegularizedModule(logistic_model, L2(reg_init), self.lam_, init_weight, self.include_intercept_)
         self.coefs_ = self.solver_.fit(model, X, y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:

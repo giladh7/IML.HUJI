@@ -9,6 +9,7 @@ from IMLearn.desent_methods import GradientDescent, FixedLR, ExponentialLR
 from IMLearn.desent_methods.modules import L1, L2
 from IMLearn.learners.classifiers.logistic_regression import LogisticRegression
 from IMLearn.metrics import misclassification_error
+from IMLearn.model_selection import cross_validate
 from IMLearn.utils import split_train_test
 from sklearn.metrics import roc_curve, auc
 
@@ -195,10 +196,13 @@ def load_data(path: str = "../datasets/SAheart.data", train_portion: float = .8)
 def fit_logistic_regression():
     # Load and split SA Heard Disease dataset
     X_train, y_train, X_test, y_test = load_data()
+    X_train, y_train, X_test, y_test = (X_train - X_train.mean()) / X_train.std(), y_train, (
+            X_test - X_test.mean()) / X_test.std(), y_test
+
     X_train, y_train = X_train.to_numpy(), y_train.to_numpy()
     X_test, y_test = X_test.to_numpy(), y_test.to_numpy()
 
-    # Plotting convergence rate of logistic regression over SA heart disease data
+    # # Plotting convergence rate of logistic regression over SA heart disease data
     callback, values, weights = get_gd_state_recorder_callback()
     gd = GradientDescent(callback=callback, learning_rate=FixedLR(1e-4), max_iter=20000)
     lg = LogisticRegression(solver=gd, include_intercept=True).fit(X_train, y_train)
@@ -213,18 +217,57 @@ def fit_logistic_regression():
                     layout=go.Layout(title=rf"$\text{{ROC Curve Of Fitted Model - AUC}}={auc(fpr, tpr):.6f}$",
                                      xaxis=dict(title=r"$\text{False Positive Rate (FPR)}$"),
                                      yaxis=dict(title=r"$\text{True Positive Rate (TPR)}$")))
-    fig.show()
+    # fig.show()
     best_alpha_index = np.argmax(tpr - fpr)
     best_alpha_value = thresholds[best_alpha_index]
     print(f"Best alpha: {best_alpha_value}")
-    lg_by_best_alpha = LogisticRegression(alpha=best_alpha_value)
-    prediction = lg_by_best_alpha.fit(X_train, y_train).predict(X_test)
-    error = misclassification_error(y_test, prediction)
+    error = misclassification_error(y_test, lg.predict_proba(X_test) >= best_alpha_value)
     print("Test error for alpha: ", error)
 
-    # Fitting l1- and l2-regularized logistic regression models, using cross-validation to specify values
+    # # Fitting l1- and l2-regularized logistic regression models, using cross-validation to specify values
     # of regularization parameter
-    raise NotImplementedError()
+    # alpha = 0.05
+    # modules = ["l1", "l2"]
+    # lambdas = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
+    #
+    # callback, values, weights = get_gd_state_recorder_callback()
+    # for module in modules:
+    #     cv_scores = []
+    #     for lam in lambdas:
+    #         lg = LogisticRegression(include_intercept=True, penalty=module, alpha=alpha, lam=lam,
+    #                                 solver=GradientDescent(learning_rate=FixedLR(1e-4), max_iter=20000,
+    #                                                        callback=callback))
+    #         train_score, validation_score = cross_validate(lg, X_train, y_train, misclassification_error)
+    #         cv_scores.append(validation_score)
+    #
+    #     best_lambda = lambdas[np.argmin(np.array(cv_scores))]
+    #     print(f"best lambda for {module} penalty: {best_lambda}")
+    #     callback, values, weights = get_gd_state_recorder_callback()
+    #     lg = LogisticRegression(penalty=module, alpha=alpha, lam=best_lambda,
+    #                             solver=GradientDescent(learning_rate=FixedLR(1e-4), max_iter=20000,
+    #                                                    callback=callback)).fit(X_train, y_train)
+    #     error = misclassification_error(y_test, lg.predict(X_test))
+    #     print(f"Test error for {module} penalty and {best_lambda} is: {error}")
+    lambdas = np.array([0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1])
+    for i in range(1, 3):
+        callback, values, weights = get_gd_state_recorder_callback()
+        validation_scores = np.zeros(lambdas.shape[0])
+        train_scores = np.zeros(lambdas.shape[0])
+        for j, lam in enumerate(lambdas[0:5]):
+            model = LogisticRegression(penalty=f"l{i}", lam=lam, solver=GradientDescent(learning_rate=FixedLR(1e-4), max_iter=20000,
+                                                       callback=callback))
+            train_score, validation_score = cross_validate(model,
+                                                           X_train,
+                                                           y_train,
+                                                           misclassification_error)
+            validation_scores[j] = validation_score
+            train_scores[j] = train_score
+        best_lambda = lambdas[np.argmin(validation_scores)]
+        model = LogisticRegression(penalty=f"l{i}", lam=best_lambda, solver=GradientDescent(learning_rate=FixedLR(1e-4), max_iter=20000,
+                                                       callback=callback))
+        model.fit(X_train, y_train)
+        loss = model.loss(X_test, y_test)
+        print(f"Best lambda for model with regularization L{i} is: {loss} with lambda {best_lambda}")
 
 
 if __name__ == '__main__':
