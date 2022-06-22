@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from typing import Tuple, List, Callable, Type
 
+from plotly.subplots import make_subplots
+
 from IMLearn import BaseModule
 from IMLearn.desent_methods import GradientDescent, FixedLR, ExponentialLR
 from IMLearn.desent_methods.modules import L1, L2
@@ -130,26 +132,31 @@ def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.
                                     eta: float = .1,
                                     gammas: Tuple[float] = (.9, .95, .99, 1)):
     # Optimize the L1 objective using different decay-rate values of the exponentially decaying learning rate
-
+    fig = make_subplots(rows=2, cols=2, subplot_titles=gammas, horizontal_spacing=0.01, vertical_spacing=0.05)
     figs = []
-    for gamma in gammas:
+    for i, gamma in enumerate(gammas):
         cur_LR = ExponentialLR(eta, gamma)
         convergences = []
-        GD_solver = GradientDescent(cur_LR,
-                                    callback=lambda model, lst: convergences.append(lst[-1]))
+        callback, values, weights = get_gd_state_recorder_callback()
+        GD_solver = GradientDescent(cur_LR, callback=callback)
 
         GD_solver.fit(L1(init.copy()), None, None)
-        figs.append(go.Scatter(x=np.arange(GD_solver.max_iter_), y=convergences, name=gamma))
 
-    go.Figure(data=figs, ).show()
-
-    raise NotImplementedError()
+        fig.add_trace(go.Scatter(x=np.arange(GD_solver.max_iter_), y=values, name=gamma),
+                      row=(i // 2) + 1, col=(i % 2) + 1)
+        print(f"min L1 with decay rate of {gamma} is {np.min(values)}")
 
     # Plot algorithm's convergence for the different values of gamma
-    raise NotImplementedError()
+    fig.update_layout(title="L1 Convergence rate as a function of iteration number")
+    # fig.show()
 
     # Plot descent path for gamma=0.95
-    raise NotImplementedError()
+    L1_module = L1(init.copy())
+    lr = ExponentialLR(eta, 0.95)
+    callback, values, weights = get_gd_state_recorder_callback()
+    GradientDescent(learning_rate=lr, callback=callback).fit(L1_module, None, None)
+    fig = plot_descent_path(L1, np.array(weights), title="L1 norm with exponential learning rate gamma=0.95")
+    fig.show()
 
 
 def load_data(path: str = "../datasets/SAheart.data", train_portion: float = .8) -> \
