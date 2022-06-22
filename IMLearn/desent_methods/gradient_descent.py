@@ -121,22 +121,22 @@ class GradientDescent:
 
         """
         # initialize variables for the procedure
-        cur_solution, best_solution, best_val = f.weights, f.weights, f.compute_output()
+        cur_solution, best_solution, best_val = f.weights, f.weights, f.compute_output(X=X, y=y)
         sum_solutions = best_solution
         eta, sum, delta, iter_num, grad = 0, 0, 0, 1, 0
 
         for _ in range(self.max_iter_):
             # computing x^t+1
             eta = self.learning_rate_.lr_step(t=iter_num)
-            cur_solution = cur_solution - eta * f.compute_jacobian()
+            cur_solution = cur_solution - eta * f.compute_jacobian(X=X, y=y)
             delta = np.linalg.norm(cur_solution - f.weights)
 
             # updating variables
             iter_num += 1
             f.weights = cur_solution
             sum_solutions += cur_solution
-            if f.compute_output() < best_val:
-                best_solution, best_val = f.weights.copy(), f.compute_output()
+            if f.compute_output(X=X, y=y) < best_val:
+                best_solution, best_val = f.weights.copy(), f.compute_output(X=X, y=y)
 
             self.callback_(self, [f.weights, f.compute_output(X=X, y=y), f.compute_jacobian(X=X, y=y),
                                   iter_num, eta, delta])
