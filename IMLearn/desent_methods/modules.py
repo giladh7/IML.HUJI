@@ -135,7 +135,7 @@ class LogisticModule(BaseModule):
             Value of function at point self.weights
         """
         m = X.shape[0]
-        return -np.sum(y * X @ self.weights - np.log(1 + np.exp(X @ self.weights))) / m
+        return -np.sum(y @ X @ self.weights_ - np.log(1 + np.exp(X @ self.weights))) / m
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -156,7 +156,7 @@ class LogisticModule(BaseModule):
         """
         m = X.shape[0]
         z = np.exp(X @ self.weights)
-        return (X.T * ((z / (1 + z)) - y)).T / m
+        return (X.T @ ((z / (1 + z)) - y)).T / m
 
 
 class RegularizedModule(BaseModule):
@@ -231,11 +231,8 @@ class RegularizedModule(BaseModule):
         output: ndarray of shape (n_in,)
             Derivative with respect to self.weights at point self.weights
         """
-        fidelity_jacobian = self.fidelity_module_.compute_jacobian(**kwargs)
-        reg_jacobian = self.regularization_module_.compute_jacobian(**kwargs)
-        if self.include_intercept_:
-            reg_jacobian = np.concatenate(([0], reg_jacobian))
-        return fidelity_jacobian + self.lam_ * reg_jacobian
+        return self.fidelity_module_.compute_jacobian(**kwargs) + \
+               self.lam_ * self.regularization_module_.compute_jacobian(**kwargs)
 
     @property
     def weights(self):
@@ -246,7 +243,7 @@ class RegularizedModule(BaseModule):
         -------
         weights: ndarray of shape (n_in, n_out)
         """
-        return self.weights
+        return self.weights_
 
     @weights.setter
     def weights(self, weights: np.ndarray) -> None:
@@ -263,7 +260,7 @@ class RegularizedModule(BaseModule):
         """
         self.weights = weights.copy()
         self.fidelity_module_.weights = self.weights
+        self.regularization_module_.weights = self.weights
+
         if self.include_intercept_:
-            self.regularization_module_.weights = weights[1:]
-        else:
-            self.regularization_module_.weights = weights
+            self.regularization_module_.weights[0] = 0

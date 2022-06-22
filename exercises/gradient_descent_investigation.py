@@ -7,6 +7,7 @@ from IMLearn.desent_methods import GradientDescent, FixedLR, ExponentialLR
 from IMLearn.desent_methods.modules import L1, L2
 from IMLearn.learners.classifiers.logistic_regression import LogisticRegression
 from IMLearn.utils import split_train_test
+from sklearn.metrics import roc_curve, auc
 
 import plotly.graph_objects as go
 
@@ -87,6 +88,8 @@ def get_gd_state_recorder_callback() -> Tuple[Callable[[], None], List[np.ndarra
 def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                  etas: Tuple[float] = (1, .1, .01, .001)):
     lowest_loss = []
+    L1_convergence = go.Figure()
+    L2_convergence = go.Figure()
     for eta in etas:
         for model, name in ((L1, "L1"), (L2, "L2")):
             cur_LR = FixedLR(eta)
@@ -94,23 +97,34 @@ def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e /
 
             GD_solver = GradientDescent(cur_LR, callback=callback)
             GD_solver.fit(model(init.copy()), None, None)
-            title = f"{name} model convergence rate as function of iteration number (eta = {eta})".format(name=name,
-                                                                                                          eta=eta)
+            title = f"{name} module as function of iteration number (eta = {eta})".format(name=name, eta=eta)
             plot_descent_path(model, np.array(weights), title)  # .show()
+            if eta == 0.01:
+                plot_descent_path(model, np.array(weights), title).show()
 
-            fig = go.Figure(go.Scatter(x=np.arange(GD_solver.max_iter_), y=values, mode='markers'))
-            fig.update_layout(title=title)
-            fig.update_xaxes(title_text="Iteration Number")
-            fig.update_yaxes(title_text=f"{name} Norm".format(name=name))
-            # fig.show()
-
+            fig = go.Scatter(x=np.arange(GD_solver.max_iter_), y=values, mode='lines',
+                             name=f"learning rate {eta}".format(name=name, eta=eta))
+            if name == "L1":
+                L1_convergence.add_trace(fig)
+            else:
+                L2_convergence.add_trace(fig)
             lowest_loss.append(np.min(values))
+    L1_convergence.update_layout(title="L1 convergence rate as function of iteration number")
+    L1_convergence.update_xaxes(title_text="Iteration Number")
+    L1_convergence.update_yaxes(title_text=f"{name} Norm".format(name=name))
+    L1_convergence.show()
+
+    L2_convergence.update_layout(title="L2 convergence rate as function of iteration number")
+    L2_convergence.update_xaxes(title_text="Iteration Number")
+    L2_convergence.update_yaxes(title_text=f"{name} Norm".format(name=name))
+    L2_convergence.show()
 
     print(lowest_loss)
     lowest_loss = np.array(lowest_loss)
     lowest_loss.shape = (len(etas), 2)
     for i in range(len(lowest_loss)):
         print("eta = ", etas[i], "L1: ", lowest_loss[i][0], "  L2: ", lowest_loss[i][1])
+
 
 def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                     eta: float = .1,
@@ -173,6 +187,15 @@ def load_data(path: str = "../datasets/SAheart.data", train_portion: float = .8)
 def fit_logistic_regression():
     # Load and split SA Heard Disease dataset
     X_train, y_train, X_test, y_test = load_data()
+    X_train, y_train = X_train.to_numpy(), y_train.to_numpy()
+    X_test, y_test = X_test.to_numpy(), y_test.to_numpy()
+
+    callback, values, weights = get_gd_state_recorder_callback()
+    gd = GradientDescent(callback=callback, learning_rate=FixedLR(1e-4), max_iter=20000)
+    lr = LogisticRegression(solver=gd).fit(X_train, y_train)
+
+    alphas = np.linspace(0, 1, 101)
+    model = LogisticRegression()
 
     # Plotting convergence rate of logistic regression over SA heart disease data
     raise NotImplementedError()
@@ -186,4 +209,4 @@ if __name__ == '__main__':
     np.random.seed(0)
     # compare_fixed_learning_rates()
     compare_exponential_decay_rates()
-    fit_logistic_regression()
+    # fit_logistic_regression()
