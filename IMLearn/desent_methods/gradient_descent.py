@@ -121,9 +121,9 @@ class GradientDescent:
 
         """
         # initialize variables for the procedure
-        cur_solution, best_solution, best_val = f.weights, f.weights, f.compute_output(X=X, y=y)
+        cur_solution, best_solution, best_val = f.weights.copy(), f.weights.copy(), f.compute_output(X=X, y=y)
         sum_solutions = best_solution
-        eta, sum, delta, iter_num, grad = 0, 0, 0, 1, 0
+        eta, delta, iter_num, grad = 0, 0, 0, 0
 
         for _ in range(self.max_iter_):
             # computing x^t+1
@@ -147,4 +147,4 @@ class GradientDescent:
             return sum_solutions / iter_num
         elif self.out_type_ == "best":
             return best_solution
-        return f.weights
+        return cur_solution
