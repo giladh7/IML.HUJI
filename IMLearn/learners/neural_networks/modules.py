@@ -100,6 +100,13 @@ class FullyConnectedLayer(BaseModule):
             return self.activation.compute_jacobian(X=X @ weights) @ X.T
         return self.activation.compute_jacobian(X=X @ self.weights) @ X.T
 
+    def compute_output_before_activation(self, X):
+        if self.include_intercept:
+            X = np.c_[np.ones(len(X)), X]
+            weights = np.r_[np.atleast_2d(self.intercept_weight), self.weights_]
+            return X @ weights
+        return X @ self.weights
+
 
 class ReLU(BaseModule):
     """

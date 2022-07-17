@@ -23,12 +23,18 @@ class NeuralNetwork(BaseEstimator, BaseModule):
 
     pre_activations_:
     """
+
     def __init__(self,
                  modules: List[FullyConnectedLayer],
                  loss_fn: BaseModule,
                  solver: Union[StochasticGradientDescent, GradientDescent]):
         super().__init__()
-        raise NotImplementedError()
+        self.modules_ = modules
+        self.loss_fn_ = loss_fn
+        self.solver_ = solver
+
+        self.pre_activations = np.empty(len(modules) + 1, dtype=object)
+        self.post_activations = np.empty(len(modules) + 1, dtype=object)
 
     # region BaseEstimator implementations
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
@@ -43,7 +49,7 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        self.weights = self.solver_.fit(f=self, X=X, y=y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -59,7 +65,8 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         responses : ndarray of shape (n_samples, )
             Predicted labels of given samples
         """
-        raise NotImplementedError()
+        self.compute_prediction(X)
+        return np.argmax(self.post_activations[-1], axis=1)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -78,7 +85,8 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         loss : float
             Performance under specified loss function
         """
-        raise NotImplementedError()
+        return self.loss_fn_.compute_output(y=y, X=self._predict(X))
+
     # endregion
 
     # region BaseModule implementations
@@ -103,7 +111,8 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         -----
         Function stores all intermediate values in the `self.pre_activations_` and `self.post_activations_` arrays
         """
-        raise NotImplementedError()
+        self.compute_prediction(X)
+        return self.loss_fn_.compute_output(X=self.post_activations[-1], y=y, **kwargs)
 
     def compute_prediction(self, X: np.ndarray):
         """
@@ -120,7 +129,17 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         output : ndarray of shape (n_samples, n_classes)
             Network's output values prior to the call of the loss function
         """
-        raise NotImplementedError()
+        o = X
+        self.pre_activations[0] = 0
+        self.post_activations = o
+
+        for t, layer in enumerate(self.modules_):
+            a = layer.compute_output_before_activation(o)
+            self.pre_activations[t + 1] = a
+            o = layer.activation.compute_output(X=a)
+            self.post_activations[t + 1] = o
+
+        return self.post_activations[-1]
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -143,7 +162,16 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         Function depends on values calculated in forward pass and stored in
         `self.pre_activations_` and `self.post_activations_`
         """
-        raise NotImplementedError()
+        l = len(self.modules_)
+        delta_t = self.loss_fn_.compute_jacobian(X=self.post_activations[-1], y=y, **kwargs)
+
+        gradients = np.empty(len(self.modules_), dtype=object)
+        for t, layer in enumerate(reversed(self.modules_)):
+            J_a_o = layer.activation.compute_jacobian(X=self.pre_activations[l - t])
+            gradients[l - t - 1] = self.post_activations[l - t - 1].T @ (delta_t * J_a_o) / len(X)
+            delta_t = (delta_t * J_a_o) @ layer.weights.T
+
+        return self._flatten_parameters(gradients)
 
     @property
     def weights(self) -> np.ndarray:
@@ -172,6 +200,7 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         non_flat_weights = NeuralNetwork._unflatten_parameters(weights, self.modules_)
         for module, weights in zip(self.modules_, non_flat_weights):
             module.weights = weights
+
     # endregion
 
     # region Internal methods
