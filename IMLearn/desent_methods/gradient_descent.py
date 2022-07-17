@@ -135,11 +135,13 @@ class GradientDescent:
             iter_num += 1
             f.weights = cur_solution
             sum_solutions += cur_solution
-            if f.compute_output(X=X, y=y) < best_val:
-                best_solution, best_val = f.weights.copy(), f.compute_output(X=X, y=y)
+            # if f.compute_output(X=X, y=y) < best_val:
+            #     best_solution, best_val = f.weights.copy(), f.compute_output(X=X, y=y)
 
-            self.callback_(self, [f.weights, f.compute_output(X=X, y=y), f.compute_jacobian(X=X, y=y),
-                                  iter_num, eta, delta])
+            # self.callback_(self, [f.weights, f.compute_output(X=X, y=y), f.compute_jacobian(X=X, y=y),
+            #                       iter_num, eta, delta])
+            self.callback_(solver=self, weights=cur_solution, val=f.compute_output(X=X, y=y), grad=grad, t=iter_num,
+                           eta=eta, delta=delta)
             if delta < self.tol_:
                 break
 

@@ -198,3 +198,11 @@ class CrossEntropyLoss(BaseModule):
             # filling E to e_k for each sample x
             E[i, y[i]] = 1
         return softmax(X) - E
+
+
+class No_Activation(BaseModule):
+    def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
+        return X
+
+    def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
+        return np.ones_like(X)

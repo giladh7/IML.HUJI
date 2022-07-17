@@ -131,7 +131,7 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         """
         o = X
         self.pre_activations[0] = 0
-        self.post_activations = o
+        self.post_activations[0] = o
 
         for t, layer in enumerate(self.modules_):
             a = layer.compute_output_before_activation(o)
