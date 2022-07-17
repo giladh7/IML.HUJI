@@ -102,7 +102,7 @@ def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e /
             GD_solver = GradientDescent(cur_LR, callback=callback)
             GD_solver.fit(model(init.copy()), None, None)
             title = f"{name} module as function of iteration number (eta = {eta})".format(name=name, eta=eta)
-            plot_descent_path(model, np.array(weights), title)  # .show()
+            plot_descent_path(model, np.array(weights), title).show()
             if eta == 0.01:
                 plot_descent_path(model, np.array(weights), title).show()
 
@@ -150,7 +150,7 @@ def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.
 
     # Plot algorithm's convergence for the different values of gamma
     fig.update_layout(title="L1 Convergence rate as a function of iteration number")
-    # fig.show()
+    fig.show()
 
     # Plot descent path for gamma=0.95
     L1_module = L1(init.copy())
@@ -217,7 +217,7 @@ def fit_logistic_regression():
                     layout=go.Layout(title=rf"$\text{{ROC Curve Of Fitted Model - AUC}}={auc(fpr, tpr):.6f}$",
                                      xaxis=dict(title=r"$\text{False Positive Rate (FPR)}$"),
                                      yaxis=dict(title=r"$\text{True Positive Rate (TPR)}$")))
-    # fig.show()
+    fig.show()
     best_alpha_index = np.argmax(tpr - fpr)
     best_alpha_value = thresholds[best_alpha_index]
     print(f"Best alpha: {best_alpha_value}")
@@ -252,17 +252,8 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # compare_fixed_learning_rates()
-    # compare_exponential_decay_rates()
-    # fit_logistic_regression()
-    X_train, y_train, X_test, y_test = load_data()
-    X_train = (X_train - X_train.mean()) / X_train.std()
-    X_test = X_test - X_test.mean() / X_test.std()
+    compare_fixed_learning_rates()
+    compare_exponential_decay_rates()
+    fit_logistic_regression()
 
-    X_train, y_train = X_train.to_numpy(), y_train.to_numpy()
-    X_test, y_test = X_test.to_numpy(), y_test.to_numpy()
-    callback, values, weights = get_gd_state_recorder_callback()
-    gd = GradientDescent(callback=callback, learning_rate=FixedLR(1e-4), max_iter=20000)
-    lg = LogisticRegression(solver=gd, include_intercept=True, alpha=0.2).fit(X_train, y_train)
-    print(lg.loss(X_test, y_test))
 
