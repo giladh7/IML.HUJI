@@ -58,7 +58,11 @@ class StochasticGradientDescent:
             Callable function receives as input any argument relevant for the current GD iteration. Arguments
             are specified in the `GradientDescent.fit` function
         """
-        raise NotImplementedError()
+        self.learning_rate_ = learning_rate
+        self.tol_ = tol
+        self.max_iter_ = max_iter
+        self.batch_size_ = batch_size
+        self.callback_ = callback
 
     def fit(self, f: BaseModule, X: np.ndarray, y: np.ndarray):
         """
@@ -107,7 +111,26 @@ class StochasticGradientDescent:
             - batch_indices: np.ndarray of shape (n_batch,)
                 Sample indices used in current SGD iteration
         """
-        raise NotImplementedError()
+        cur_solution, sum_solutions = f.weights.copy(), f.weights.copy()
+        eta, delta, grad = 0, 0, 0
+
+        for t in range(self.max_iter_):
+            batch_indices = np.random.randint(0, len(X), size=self.batch_size_)
+            val, jac, eta = self._partial_fit(f=f, X=X[batch_indices], y=y[batch_indices], t=t)
+            self.callback_(solver=self, weights=cur_solution, val=val, grad=jac, t=t,
+                           eta=eta, delta=delta, batch_indices=batch_indices)
+
+            prev_solution = cur_solution.copy()
+            cur_solution = cur_solution - eta * jac
+            f.weights = cur_solution.copy()
+            sum_solutions += cur_solution
+
+            # check stop condition
+            delta = np.linalg.norm(cur_solution - prev_solution)
+            if delta < self.tol_:
+                break
+
+        return sum_solutions / (t + 1)
 
     def _partial_fit(self, f: BaseModule, X: np.ndarray, y: np.ndarray, t: int) -> Tuple[np.ndarray, np.ndarray, float]:
         """
@@ -138,4 +161,7 @@ class StochasticGradientDescent:
         eta: float
             learning rate used at current iteration
         """
-        raise NotImplementedError()
+        val = f.compute_output(X=X, y=y)
+        jac = f.compute_jacobian(X=X, y=y)
+        eta = self.learning_rate_.lr_step(t=t)
+        return val, jac, eta
