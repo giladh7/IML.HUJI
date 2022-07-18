@@ -111,25 +111,45 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------------#
     # Question 1: Fitting simple network with two hidden layers                                    #
     # ---------------------------------------------------------------------------------------------#
+    # ---------------------------------------------------------------------------------------------#
+    # Question 2: Fitting a network with no hidden layers                                          #
+    # ---------------------------------------------------------------------------------------------#
     layers_with_hidden = [FullyConnectedLayer(input_dim=2, output_dim=16, activation=ReLU(), include_intercept=True),
                           FullyConnectedLayer(input_dim=16, output_dim=16, activation=ReLU(), include_intercept=True),
-                          FullyConnectedLayer(input_dim=16, output_dim=3, activation=No_Activation(),
+                          FullyConnectedLayer(input_dim=16, output_dim=3, activation=Identity(),
                                               include_intercept=True)]
-    layers_without_hidden = [FullyConnectedLayer(input_dim=2, output_dim=16, activation=No_Activation(),
+    layers_without_hidden = [FullyConnectedLayer(input_dim=2, output_dim=16, activation=Identity(),
                                                  include_intercept=True)]
     for layers in [layers_with_hidden, layers_without_hidden]:
         gd = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000)
         net = NeuralNetwork(modules=layers, loss_fn=CrossEntropyLoss(), solver=gd).fit(train_X, train_y)
-        plot_decision_boundary(net, lims, train_X, train_y, "q1").show()
+        # plot_decision_boundary(net, lims, train_X, train_y, "q1").show()
         prediction = net.predict(test_X)
         print(accuracy(test_y, prediction))
-
-    # ---------------------------------------------------------------------------------------------#
-    # Question 2: Fitting a network with no hidden layers                                          #
-    # ---------------------------------------------------------------------------------------------#
-    raise NotImplementedError()
-
     # ---------------------------------------------------------------------------------------------#
     # Question 3+4: Plotting network convergence process                                           #
     # ---------------------------------------------------------------------------------------------#
-    raise NotImplementedError()
+    layers_with_six_neurons = [
+        FullyConnectedLayer(input_dim=2, output_dim=6, activation=ReLU(), include_intercept=True),
+        FullyConnectedLayer(input_dim=6, output_dim=6, activation=ReLU(), include_intercept=True),
+        FullyConnectedLayer(input_dim=6, output_dim=3, activation=Identity(),
+                            include_intercept=True)]
+    for layers, name in [(layers_with_hidden, "Q3 - 16 neurons"), (layers_with_hidden, "Q4 - 6 neurons")]:
+        losses, norms, weights_record = [], [], []
+
+        def callback(val, grad, t, weights, **kwargs):
+            losses.append(val)
+            norms.append(np.linalg.norm(grad))
+            if t % 100 == 0:
+                weights_record.append(weights)
+
+
+        gd = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000, callback=callback)
+        net = NeuralNetwork(modules=layers, loss_fn=CrossEntropyLoss(), solver=gd).fit(train_X, train_y)
+        fig = go.Figure([go.Scatter(x=np.arange(1, len(losses)), y=losses, mode='markers + lines', name="Losses"),
+                         go.Scatter(x=np.arange(1, len(losses)), y=norms, mode='markers + lines', name="Gradient Norm"),
+                         ])
+        fig.update_layout(title=name)
+        fig.show()
+        animate_decision_boundary(net, weights_record, lims, train_X, train_y, save_name=name+".gif")
+
